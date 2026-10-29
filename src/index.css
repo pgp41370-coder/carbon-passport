@@ -1,0 +1,53 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/*
+ * Carbon Passport design tokens.
+ * Forest-green primary scale, warm neutral surfaces, and semantic colours for
+ * evidence status (verified / needs review / missing). Use these through
+ * Tailwind utilities, e.g. `bg-forest-700`, `text-ink-600`, `border-line`.
+ */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-forest-50: #eef7f1;
+  --color-forest-100: #d5ecdd;
+  --color-forest-200: #aed9bf;
+  --color-forest-300: #7cbf9b;
+  --color-forest-400: #4ea076;
+  --color-forest-500: #2f845b;
+  --color-forest-600: #216a48;
+  --color-forest-700: #1b553b;
+  --color-forest-800: #164431;
+  --color-forest-900: #0f3024;
+  --color-forest-950: #081c15;
+
+  --color-moss-400: #9bbf5a;
+  --color-moss-500: #7fa33f;
+
+  --color-ink-400: #8a948f;
+  --color-ink-500: #6b7570;
+  --color-ink-600: #4d5652;
+  --color-ink-700: #343b38;
+  --color-ink-900: #151a18;
+
+  --color-canvas: #f7f8f5;
+  --color-surface: #ffffff;
+  --color-line: #e3e7e2;
+
+  --color-status-verified: #216a48;
+  --color-status-review: #b7791f;
+  /* Darker amber for small text on light backgrounds (WCAG AA). */
+  --color-status-review-ink: #8a5a12;
+  --color-status-missing: #b42318;
+}
+
+@layer base {
+  html {
+    @apply bg-canvas text-ink-900 antialiased;
+  }
+
+  body {
+    @apply min-h-screen font-sans;
+  }
+}
