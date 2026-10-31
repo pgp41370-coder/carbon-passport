@@ -14,9 +14,9 @@ export const STATUS_LABELS: Record<PassportStatus, string> = {
 }
 
 export const CLAIM_LABELS: Record<ClaimKind, { label: string; meaning: string }> = {
-  extracted: { label: 'Extracted', meaning: 'Read from a document; source shown.' },
-  needs_review: { label: 'Needs review', meaning: 'Read from a document but uncertain or conflicting.' },
-  derived: { label: 'Derived', meaning: 'Computed from extracted values; method shown.' },
+  extracted: { label: 'Found in source', meaning: 'Read from a document; source shown.' },
+  needs_review: { label: 'Needs check', meaning: 'Read from a document but uncertain or conflicting.' },
+  derived: { label: 'Calculated from sources', meaning: 'Computed from values found in documents; method shown.' },
   proposed: { label: 'Proposed by user', meaning: 'Entered by a person; not source-backed.' },
   assumption: { label: 'Assumption', meaning: 'A stated assumption of this draft.' },
   missing: { label: 'Missing', meaning: 'Not established from available evidence.' },

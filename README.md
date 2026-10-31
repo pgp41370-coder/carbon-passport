@@ -7,23 +7,48 @@ everyday documents (invoices, electricity bills, production logs, job-work chall
 draft of product-level carbon evidence for a buyer. The pilot scenario is one steel-fastener batch whose heat
 treatment is outsourced to a job-worker.
 
-> **Status:** all six screens are built: Dashboard, Document Upload, Extraction & Validation, Supply-Chain
-> Traceability, the draft Carbon Passport and Export & Download. Every figure is derived from the documents stored in
+> **Status:** all six screens are built: Dashboard, Upload documents, Check documents, Supply chain, the draft
+> Carbon Passport and Download. Every figure is derived from the documents stored in
 > the browser. No carbon footprint is calculated and nothing is certified.
 
 ## Workflow
 
-1. **Upload** documents (or load the synthetic sample pack). Files are stored in IndexedDB.
-2. **Extract & validate**: read each document in the browser, inspect values against their sources, review issues.
-3. **Trace** the batch from steel mill to finished batch; add review notes or clearly labelled proposed links.
-4. **Passport**: read the evidence-linked draft, including what is missing and why no calculation is possible.
-5. **Export**: download the draft as HTML and JSON, or print the HTML to PDF.
+1. **Upload documents** (or try the synthetic sample pack). Files are stored in IndexedDB and **read automatically**
+   in the browser straight after upload; there is no separate processing step.
+2. **Check documents**: see what was read from each document, open its source, and review problems.
+3. **Supply chain**: follow the batch from steel mill to finished batch; add review notes or clearly labelled proposed
+   links.
+4. **Carbon Passport**: the evidence-linked draft, including what is missing and why no calculation is possible.
+5. **Download**: save the draft as HTML and JSON, or print the HTML to PDF.
 
-The **Dashboard** summarises the same derived model used by Traceability, the Passport and Export
+Every screen ends with one **Continue** button to the next step. Long reference sections (evidence register,
+methodology, status legend, stage details, full document text, how each field was read) stay collapsed behind
+**Show details** but are never removed.
+
+Everywhere in the app, evidence has one of three plain statuses: **Found** (a document contains the value, with a
+page, line or cell you can open), **Needs check** (uncertain, conflicting or proposed by a person) or **Missing**.
+
+The **Dashboard** summarises the same derived model used by Supply chain, the Passport and Download
 (`usePassport` → `buildPassport` → `buildTrace` + `runValidation`), so batch identity, statuses, issues and gaps always
-agree. It separates document presence, extraction status, source-supported requirements, open issues and human
-reviews. Evidence readiness is a count of traceability requirements by status, not a percentage, and review notes never
-change it. With no documents, or with documents that are not processed yet, every screen says so instead of showing
+agree. With an empty workspace it offers **Try with sample documents** (loads and reads the sample pack in one click)
+and **Upload my documents**. Its **What we found** card groups everything into Problems, Missing, Needs check and Found,
+each item with a **Show source** button that opens the exact line or cell. These are counts, not a score, and review
+notes never change them.
+
+### How to fix
+
+Every Problem, Missing and Needs-check item has a **How to fix** button (`src/features/fixes/`). It says who to ask,
+which document is needed and what it must show, lists the steps, and offers a ready **request message** in English
+and Hindi to copy into WhatsApp or email (the app never sends anything). Then:
+
+- **Upload the document**: it is saved, read in the browser and everything is checked again. A banner shows what
+  changed, e.g. *Problems 2 → 1 · Missing 4 → 3*.
+- **Replace** a cited document with a corrected copy: the new file is added, the old one removed, and the checks run
+  again. The app never decides which of two conflicting values is right; a person does.
+- **Open Supply chain** for evidence the app cannot read yet (stockist record, return challan, finished output): record
+  the reference on the hand-off as a proposed link, which shows as *Needs check*.
+
+The app never edits a value or fills a gap itself. Every fix is a real document, and the passport stays a draft. With no documents, or with documents that are not processed yet, every screen says so instead of showing
 figures.
 
 ## Principles
@@ -69,8 +94,8 @@ All parsing runs in the browser; parsers are lazy-loaded per format.
   default single-block mode garbles bordered tables.
 - **Document type** is a keyword-based guess, shown with the matched keywords.
 - **Detected fields** (heat number, batch ID, quantities, kWh, billing period, supplier and job-worker references…) are
-  found by label and position rules in `src/features/extraction/fields.ts`. Each is *Detected*, *Needs review* (low
-  OCR confidence, several values, or a layout guess) or *Not detected*. Values are copied, never corrected or filled in.
+  found by label and position rules in `src/features/extraction/fields.ts`. Each is *Found*, *Needs check* (low
+  OCR confidence, several values, or a layout guess) or *Missing*. Values are copied, never corrected or filled in.
   Lines of the synthetic-sample banner are ignored as evidence.
 - **Checks** (`src/features/evidence/validation.ts`): mill-certificate vs challan heat number; job-worker energy
   evidence (missing energy is never assumed to be zero); required batch IDs and quantities; conflicting batch IDs.
@@ -112,8 +137,11 @@ all parties are named "Sample … (fictional)".
 | Plant electricity bill       | Scanned-style PNG      | January 2026                                     |
 | Dispatch record              | CSV                    | Two dispatches totalling 12,000 kg               |
 
-Job-worker furnace energy records are intentionally absent to demonstrate a missing-evidence gap. **Load Sample Pack**
-in the app copies these files into IndexedDB as sample documents, kept visually separate from user uploads.
+Job-worker furnace energy records are intentionally absent to demonstrate a missing-evidence gap. Two synthetic
+**fix documents** in `public/samples/fixes/` (a revised challan with the corrected heat number, and the job-worker's
+furnace energy statement) demonstrate the How-to-fix flow; with the sample pack loaded, each fix guide offers a
+**Demo: use the sample …** button. They are generated by `generate_documents.py --fixes`. **Try with sample
+documents** (Dashboard) or **Load Sample Pack** (Upload documents) copies these files into IndexedDB and reads them as sample documents, kept visually separate from user uploads.
 Reloading replaces only the sample copies.
 
 The files are generated by dev-only scripts and committed:
@@ -129,8 +157,8 @@ The traceability page follows one batch through five stages in order: steel mill
 heat-treatment job-worker → finished batch. It is built in `src/features/traceability/buildTrace.ts` from the current
 extraction results every time the page opens; the trace itself is never stored.
 
-- **Statuses:** *Supported by source* (a processed document contains the value, with an inspectable page/line or cell),
-  *Needs review*, *Missing evidence*, *Proposed by user*, plus an *Illustrative sample* tag when every supporting
+- **Statuses:** *Found in source* (a processed document contains the value, with an inspectable page/line or cell),
+  *Needs check*, *Missing*, *Proposed by user*, plus an *Illustrative sample* tag when every supporting
   document is synthetic. There is no "verified" status.
 - **Rules worth knowing:** the stockist/trader link stays unconfirmed unless a document supports it (none of the
   current document types can); the heat number is compared across certificate, production log and challan; the
@@ -154,7 +182,7 @@ stored, so removing a document removes every claim that rested on it.
 
 - **Sections:** batch identity, supply chain, quantities and boundary, energy/activity data, calculation status, issues
   and gaps with reviewer actions, an evidence register, and methodology/assumptions/limitations.
-- **Claim kinds:** *Extracted* (with source), *Needs review*, *Derived* (computed, method shown), *Proposed by user*,
+- **Claim kinds:** *Found in source*, *Needs check*, *Calculated from sources* (method shown), *Proposed by user*,
   *Assumption*, *Missing*. Nothing is filled in from sample constants.
 - **Guardrails:** no carbon footprint or intensity is calculated. The page shows "Calculation incomplete — insufficient
   verified inputs" and lists the prerequisites: confirmed finished output, job-worker energy, a documented electricity
@@ -163,10 +191,10 @@ stored, so removing a document removes every claim that rested on it.
   before heat treatment; finished output reads "Not established from available evidence."
 - **Status badges:** Draft, Evidence incomplete, Needs human review, Calculation unavailable. "Ready for independent
   review" appears only if every prerequisite is met, which this prototype cannot currently achieve.
-- **Exports** (Passport page and the Export & Download page): *HTML* is a self-contained, printable document; *JSON*
+- **Exports** (Passport page and the Download page): *HTML* is a self-contained, printable document; *JSON*
   is the same model with `draft: true`, `certified: false`, `verified: false`; *Print / Save as PDF* prints exactly
   the HTML export from a hidden frame. All are generated in the browser from the same object as the screen. Before
-  downloading, the Export page lists every open issue, gap, missing calculation input and unused document. A verified
+  downloading, the Download page lists every open issue, gap, missing calculation input and unused document. A verified
   certificate and a carbon footprint report are shown as blocked, with the reason.
 
 ## Local setup
@@ -189,12 +217,14 @@ npm run preview      # serve dist/ at http://localhost:4173
 ## Demo quick start
 
 1. Open the app with clean browser storage; the dashboard shows "No batch identified yet".
-2. Click **Start Guided Demo**, then **Load Sample Pack** (six fictional documents, clearly labelled synthetic).
-3. In **Extraction & Validation**, click **Process 6 documents**. The first OCR run downloads about 5 MB of English
-   language data, so keep internet access available, or run the demo once beforehand so the data is cached.
-4. Inspect the heat-number mismatch (24A-1187 vs 24A-1178), then follow **Traceability**, **Carbon Passport** and
-   **Export & Download**.
-5. **Document Upload → Clear all** resets the workspace for the next audience.
+2. Click **Try with sample documents**. Six fictional documents (clearly labelled synthetic) are loaded and read in
+   the browser, about 20 seconds. The first OCR run downloads about 5 MB of English language data, so keep internet
+   access available, or run the demo once beforehand so the data is cached.
+3. In **What we found**, open the heat-number problem and click **Show source** on 24A-1187 and 24A-1178.
+4. Press **How to fix** on the mismatch, then **Demo: use the sample revised job-work challan**: Problems 2 → 1. Do the
+   same for the missing job-worker energy: Problems 1 → 0, Missing 4 → 3.
+5. Press **Continue** through Check documents, Supply chain, Carbon Passport and Download.
+6. **Upload documents → Clear all** resets the workspace for the next audience.
 
 Other scripts:
 

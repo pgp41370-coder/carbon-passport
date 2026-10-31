@@ -8,9 +8,11 @@ import { DocumentList } from '../../features/documents/DocumentList'
 import { DropZone } from '../../features/documents/DropZone'
 import { formatBytes } from '../../features/documents/fileTypes'
 import { SamplePackCard } from '../../features/documents/SamplePackCard'
+import { ReadingPanel } from '../../features/documents/ReadingPanel'
 import { UploadFeedback } from '../../features/documents/UploadFeedback'
+import { NextStep } from '../../components/NextStep'
 import { useDocuments } from '../../features/documents/useDocuments'
-import { getPage, pageHref, WORKFLOW_STEP_COUNT } from '../../lib/routes'
+import { getPage, WORKFLOW_STEP_COUNT } from '../../lib/routes'
 import type { WorkflowMode } from '../../types/navigation'
 
 const page = getPage('upload')
@@ -19,7 +21,7 @@ const FACTS: { icon: IconName; title: string; body: string }[] = [
   {
     icon: 'lock',
     title: 'Files stay on this device',
-    body: 'Documents are saved in this browser’s local storage (IndexedDB). Nothing is sent to a server.',
+    body: 'Documents are saved in this browser’s own storage. Nothing is sent to a server.',
   },
   {
     icon: 'hard-drive',
@@ -28,8 +30,8 @@ const FACTS: { icon: IconName; title: string; body: string }[] = [
   },
   {
     icon: 'file-text',
-    title: 'Stored, not read yet',
-    body: 'Files are kept exactly as uploaded. Reading and extracting values happens in the next step, which is not built yet.',
+    title: 'Read automatically',
+    body: 'After upload, each file is read in this browser and checked for gaps and conflicts. The original is kept unchanged.',
   },
   {
     icon: 'alert',
@@ -86,7 +88,9 @@ export function DocumentUploadPage({ mode }: DocumentUploadPageProps) {
             busyLabel={
               docs.busy === 'upload'
                 ? `Checking and saving ${docs.pending.length} file${docs.pending.length === 1 ? '' : 's'}…`
-                : undefined
+                : docs.busy === 'reading'
+                  ? 'Reading your documents…'
+                  : undefined
             }
           />
           <ul className="grid gap-4 sm:grid-cols-2">
@@ -112,6 +116,7 @@ export function DocumentUploadPage({ mode }: DocumentUploadPageProps) {
       </div>
 
       {docs.feedback && <UploadFeedback feedback={docs.feedback} onDismiss={docs.dismissFeedback} />}
+      <ReadingPanel reading={docs.reading} result={docs.readResult} />
 
       <Card
         title="Stored documents"
@@ -126,7 +131,7 @@ export function DocumentUploadPage({ mode }: DocumentUploadPageProps) {
                 type="button"
                 onClick={() => setConfirmClear(true)}
                 disabled={controlsDisabled}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-status-missing ring-1 ring-status-missing/30 transition-colors hover:bg-status-missing/10 focus-visible:outline-2 focus-visible:outline-status-missing disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 min-h-10 rounded-lg px-3 py-1.5 text-xs font-semibold text-status-missing ring-1 ring-status-missing/30 transition-colors hover:bg-status-missing/10 focus-visible:outline-2 focus-visible:outline-status-missing disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Icon name="trash" className="size-3.5" />
                 Clear all
@@ -176,22 +181,13 @@ export function DocumentUploadPage({ mode }: DocumentUploadPageProps) {
         )}
       </Card>
 
-      {isReady && docs.documents.length > 0 && (
-        <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-line bg-surface p-5 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-sm font-semibold text-ink-900">Next: Extraction &amp; Validation</p>
-            <p className="mt-0.5 text-sm text-ink-600">
-              Read the stored documents in this browser and check them for gaps and conflicts.
-            </p>
-          </div>
-          <a
-            href={pageHref('validate', mode ?? undefined)}
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500"
-          >
-            Continue
-            <Icon name="arrow-right" className="size-4" />
-          </a>
-        </div>
+      {isReady && docs.documents.length > 0 && !docs.reading && (
+        <NextStep
+          to="validate"
+          mode={mode}
+          title="Next: Check documents"
+          body="See what was read from each document, where it came from, and which checks found problems."
+        />
       )}
 
       <ConfirmDialog

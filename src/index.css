@@ -50,4 +50,53 @@
   body {
     @apply min-h-screen font-sans;
   }
+
+  /* Tailwind v4 no longer sets a pointer cursor on buttons; every clickable control shows one. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  /* Disclosure sections: one consistent chevron instead of the browser triangle. */
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::before {
+    content: '';
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.45em;
+    height: 0.45em;
+    margin: 0 0.7em 0.15em 0.1em;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0.55;
+    transform: rotate(-45deg);
+    transition: transform 150ms ease-out;
+  }
+  details[open] > summary::before {
+    transform: rotate(45deg);
+  }
+  summary:focus-visible {
+    outline: 2px solid var(--color-forest-500);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

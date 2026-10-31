@@ -45,7 +45,7 @@ export function WorkflowProgress({ completed, current }: WorkflowProgressProps) 
             <span className={`mt-2 text-xs font-semibold sm:text-sm ${isCurrent ? 'text-forest-950' : 'text-ink-700'}`}>
               {page.step?.label}
             </span>
-            <span className={`text-[11px] sm:text-xs ${isCurrent ? 'font-medium text-forest-600' : 'text-ink-500'}`}>
+            <span className={`text-xs sm:text-xs ${isCurrent ? 'font-medium text-forest-600' : 'text-ink-500'}`}>
               {status}
             </span>
           </li>

@@ -1,18 +1,19 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Card } from '../../components/Card'
 import { Icon } from '../../components/Icon'
 import { WorkflowProgress } from '../../components/WorkflowProgress'
 import { ClaimKindChip } from '../../features/passport/ClaimList'
 import { PassportStatusBadges } from '../../features/passport/PassportStatusBadges'
-import { evidenceReadiness } from '../../features/passport/readiness'
 import { usePassport, type WorkspaceSummary } from '../../features/passport/usePassport'
-import { TraceStatusChip } from '../../features/traceability/TraceStatusChip'
-import { TRACE_STATUS } from '../../features/traceability/traceStatus'
+import { WhatWeFound } from '../../features/passport/WhatWeFound'
+import { useFixActions } from '../../features/fixes/useFixActions'
+import { SourceInspector } from '../../features/traceability/SourceInspector'
 import { pageHref } from '../../lib/routes'
+import type { SourceRef } from '../../types/extraction'
 import type { CarbonPassport } from '../../types/passport'
 import type { PageId } from '../../types/navigation'
-import type { TraceStatus } from '../../types/traceability'
 import { SampleDataDisclaimer } from './SampleDataDisclaimer'
+import { useQuickStart, type QuickStartState } from './useQuickStart'
 
 /**
  * The dashboard shows the same derived passport model as Traceability, the
@@ -27,20 +28,29 @@ function workflowState(workspace: WorkspaceSummary, passport: CarbonPassport | n
   return { completed: ['upload', 'validate'], current: passport.gaps.length ? 'traceability' : 'passport' }
 }
 
+const HOW_IT_WORKS = [
+  { title: 'Add documents', body: 'Invoices, certificates, challans, bills and logs for one batch.' },
+  { title: 'We read and check them', body: 'In your browser. Nothing is uploaded to a server.' },
+  { title: 'Fix what is missing', body: 'Each problem says who to ask and which document to get.' },
+]
+
 function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
     <div className="rounded-xl bg-canvas p-3">
       <dt className="text-xs text-ink-500">{label}</dt>
       <dd className="mt-0.5 text-xl font-semibold text-ink-900 tabular-nums">{value}</dd>
-      {hint && <p className="text-[11px] text-ink-500">{hint}</p>}
+      {hint && <p className="text-xs text-ink-500">{hint}</p>}
     </div>
   )
 }
 
 export function DashboardPage() {
-  const { loadState, passport, workspace } = usePassport()
-  const readiness = passport ? evidenceReadiness(passport) : null
+  const { loadState, passport, resultsById, workspace, reload } = usePassport()
+  const quick = useQuickStart(reload)
+  const fix = useFixActions(reload)
+  const [inspect, setInspect] = useState<SourceRef | null>(null)
   const flow = workflowState(workspace, passport)
+  const unread = workspace.notProcessed + workspace.outdated
   const claim = (label: string) =>
     passport?.identity.find((c) => c.label.startsWith(label)) ?? passport?.quantities.find((c) => c.label.startsWith(label))
 
@@ -52,6 +62,9 @@ export function DashboardPage() {
         claim('Finished-batch output'),
       ].filter((c): c is NonNullable<typeof c> => !!c)
     : []
+
+  const primary = 'inline-flex items-center justify-center gap-2 rounded-xl bg-moss-400 px-5 py-3 text-sm font-semibold text-forest-950 shadow-lg shadow-black/20 transition-colors hover:bg-moss-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss-400 disabled:cursor-wait disabled:opacity-70'
+  const secondary = 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
 
   return (
     <div className="space-y-6">
@@ -74,29 +87,67 @@ export function DashboardPage() {
             Carbon Passport
           </h1>
           <p className="mt-2 max-w-xl text-base text-forest-200 sm:text-lg">
-            From MSME documents to buyer-ready carbon evidence, assembled in your browser.
+            Add your batch documents. We read them in your browser and show what is found, what is missing and where
+            documents disagree.
           </p>
           {passport && (
             <div className="mt-4">
               <PassportStatusBadges statuses={passport.statuses} illustrative={passport.illustrative} />
             </div>
           )}
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <a
-              href={pageHref('upload', 'workflow')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-moss-400 px-5 py-3 text-sm font-semibold text-forest-950 shadow-lg shadow-black/20 transition-colors hover:bg-moss-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss-400"
-            >
-              Complete Carbon Passport
-              <Icon name="arrow-right" className="size-4" />
-            </a>
-            <a
-              href={pageHref('upload', 'demo')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              <Icon name="play" className="size-4" />
-              Start Guided Demo
-            </a>
-          </div>
+
+          {loadState.status === 'ready' && (
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              {workspace.total === 0 ? (
+                <>
+                  <button type="button" onClick={quick.trySample} disabled={quick.busy} className={primary}>
+                    <Icon name="play" className="size-4" />
+                    Try with sample documents
+                  </button>
+                  <a href={pageHref('upload', 'workflow')} className={secondary}>
+                    <Icon name="upload" className="size-4" />
+                    Upload my documents
+                  </a>
+                </>
+              ) : unread > 0 ? (
+                <>
+                  <button type="button" onClick={quick.readStored} disabled={quick.busy} className={primary}>
+                    Read {unread} document{unread === 1 ? '' : 's'}
+                    <Icon name="arrow-right" className="size-4" />
+                  </button>
+                  <a href={pageHref('upload', 'workflow')} className={secondary}>
+                    Add or change documents
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href={pageHref('passport')} className={primary}>
+                    Open Carbon Passport
+                    <Icon name="arrow-right" className="size-4" />
+                  </a>
+                  <a href={pageHref('upload', 'workflow')} className={secondary}>
+                    Add or change documents
+                  </a>
+                </>
+              )}
+            </div>
+          )}
+
+          <QuickStartStatus state={quick.state} />
+
+          <ol className="mt-8 grid gap-3 border-t border-white/10 pt-6 sm:grid-cols-3">
+            {HOW_IT_WORKS.map((step, i) => (
+              <li key={step.title} className="flex gap-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-semibold text-moss-400 ring-1 ring-white/15 tabular-nums">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{step.title}</p>
+                  <p className="mt-0.5 text-sm text-forest-200">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </header>
 
@@ -112,7 +163,7 @@ export function DashboardPage() {
         </p>
       )}
 
-      <Card title="Workflow progress">
+      <Card title="Your progress">
         <WorkflowProgress completed={flow.completed} current={flow.current} />
       </Card>
 
@@ -120,155 +171,96 @@ export function DashboardPage() {
 
       {loadState.status === 'ready' && (
         <div className="grid gap-6 xl:grid-cols-3">
-          <Card title="Documents in this browser">
-            {workspace.total === 0 ? (
-              <div className="space-y-3 text-sm text-ink-600">
-                <p>No documents are stored yet.</p>
-                <a href={pageHref('upload')} className="inline-flex rounded-xl bg-forest-700 px-4 py-2 text-sm font-semibold text-white hover:bg-forest-800">
-                  Upload or load the sample pack
-                </a>
-              </div>
-            ) : (
+          <Card title="What we found" className="xl:col-span-2">
+            {passport ? (
               <>
-                <dl className="grid grid-cols-2 gap-2">
-                  <Stat label="Stored" value={workspace.total} hint={`${workspace.samples} sample · ${workspace.uploads} uploaded`} />
-                  <Stat label="Extracted" value={workspace.processed} hint="read without failure" />
-                  <Stat label="Not processed" value={workspace.notProcessed + workspace.outdated} hint={workspace.outdated ? `${workspace.outdated} outdated` : undefined} />
-                  <Stat label="Failed" value={workspace.failed} />
-                </dl>
-                {(workspace.notProcessed > 0 || workspace.outdated > 0) && (
-                  <a href={pageHref('validate')} className="mt-3 inline-block text-sm font-semibold text-forest-700 underline">
-                    Process documents in Extraction & Validation
-                  </a>
-                )}
+                <WhatWeFound passport={passport} onInspect={setInspect} fix={fix} />
+                <p className="mt-4 text-xs text-ink-500">
+                  “Found” means a document contains the value, with a page, line or cell you can open. It is not
+                  independent verification. The app never edits a value or fills a gap: every fix is a real document,
+                  read and checked again.
+                </p>
               </>
-            )}
-          </Card>
-
-          <Card title="Evidence readiness" className="xl:col-span-2">
-            {!readiness ? (
+            ) : (
               <p className="text-sm text-ink-600">
                 {workspace.total === 0
-                  ? 'Nothing to assess until documents are stored and processed.'
-                  : 'No batch ID has been read yet. Process the stored documents to assess evidence.'}
+                  ? 'Nothing yet. Try the sample documents or upload your own to see results here.'
+                  : unread > 0
+                    ? 'Your documents are stored but not read yet. Use “Read documents” above.'
+                    : 'No batch ID could be read from the documents. Open Check documents to see what was read.'}
               </p>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-ink-700">
-                  <span className="text-2xl font-semibold text-ink-900 tabular-nums">{readiness.counts.supported}</span> of{' '}
-                  {readiness.total} traceability requirements are supported by a source document. This is a count, not a
-                  score; review notes do not change it.
-                </p>
-                <div className="flex h-3 overflow-hidden rounded-full bg-canvas" role="img" aria-label={(Object.keys(readiness.counts) as TraceStatus[]).map((s) => `${readiness.counts[s]} ${TRACE_STATUS[s].label}`).join(', ')}>
-                  {(['supported', 'proposed', 'needs_review', 'missing'] as TraceStatus[]).map((status) =>
-                    readiness.counts[status] ? (
-                      <span key={status} className={TRACE_STATUS[status].line} style={{ width: `${(readiness.counts[status] / readiness.total) * 100}%` }} />
-                    ) : null,
-                  )}
-                </div>
-                <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-600">
-                  {(['supported', 'needs_review', 'missing', 'proposed'] as TraceStatus[]).map((status) => (
-                    <li key={status}>
-                      <span className="font-semibold text-ink-900 tabular-nums">{readiness.counts[status]}</span> {TRACE_STATUS[status].label.toLowerCase()}
-                    </li>
-                  ))}
-                </ul>
-                <ul className="divide-y divide-line rounded-xl border border-line">
-                  {readiness.requirements.map((r) => (
-                    <li key={`${r.stage}-${r.id}`} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                      <span className="min-w-0 text-sm text-ink-900">
-                        {r.label}
-                        <span className="block text-xs text-ink-500">{r.stage}</span>
-                      </span>
-                      <TraceStatusChip status={r.status} size="sm" />
-                    </li>
-                  ))}
-                </ul>
-                <a href={pageHref('traceability')} className="inline-block text-sm font-semibold text-forest-700 underline">
-                  Inspect sources in Supply-Chain Traceability
-                </a>
-              </div>
             )}
           </Card>
 
-          {passport && (
-            <Card title="Batch at a glance">
-              <dl className="space-y-3">
-                {glance.map((c) => (
-                  <div key={c.label}>
-                    <dt className="text-xs text-ink-500">{c.label}</dt>
-                    <dd className="mt-0.5 flex flex-wrap items-center gap-2">
-                      <span className={`text-sm font-semibold break-words ${c.value ? 'text-ink-900' : 'text-status-missing'}`}>
-                        {c.value ?? 'Not established from available evidence'}
-                      </span>
-                      <ClaimKindChip kind={c.kind} />
-                    </dd>
-                    {c.sources.length > 0 && (
-                      <p className="text-[11px] text-ink-500">
-                        {c.sources.length} source location{c.sources.length === 1 ? '' : 's'}
-                      </p>
-                    )}
-                  </div>
-                ))}
-                <div>
-                  <dt className="text-xs text-ink-500">Carbon footprint</dt>
-                  <dd className="mt-0.5 text-sm font-semibold text-ink-900">Not calculated</dd>
-                  <p className="text-[11px] text-ink-500">{passport.calculation.headline}</p>
-                </div>
-              </dl>
-              <a href={pageHref('passport')} className="mt-4 inline-block text-sm font-semibold text-forest-700 underline">
-                Open the draft passport
-              </a>
-            </Card>
-          )}
-
-          {passport && (
-            <Card
-              title="Open issues"
-              className="xl:col-span-2"
-              aside={
-                <span className="rounded-full bg-ink-900 px-2.5 py-0.5 text-xs font-semibold text-white tabular-nums">
-                  {passport.issues.length} open · {passport.gaps.length} gaps
-                </span>
-              }
-            >
-              {passport.issues.length === 0 ? (
-                <p className="text-sm text-ink-600">No validation issues for this batch.</p>
-              ) : (
-                <ul className="grid gap-3 md:grid-cols-2">
-                  {passport.issues.map((issue) => (
-                    <li key={issue.id} className="rounded-xl border border-line bg-canvas/60 p-4">
-                      <p className="text-[11px] font-semibold text-status-missing uppercase">{issue.severity} priority</p>
-                      <h3 className="mt-1 font-semibold text-ink-900">{issue.title}</h3>
-                      <p className="mt-1 text-sm text-ink-700">{issue.detail}</p>
-                      <p className="mt-2 text-xs font-medium text-ink-600">
-                        {issue.review ? 'Human review recorded · issue still open' : 'No human review yet'}
-                      </p>
-                    </li>
+          <div className="space-y-6">
+            {passport && (
+              <Card title="Batch at a glance">
+                <dl className="space-y-3">
+                  {glance.map((c) => (
+                    <div key={c.label}>
+                      <dt className="text-xs text-ink-500">{c.label}</dt>
+                      <dd className="mt-0.5 flex flex-wrap items-center gap-2">
+                        <span className={`text-sm font-semibold break-words ${c.value ? 'text-ink-900' : 'text-status-missing'}`}>
+                          {c.value ?? 'Missing'}
+                        </span>
+                        <ClaimKindChip kind={c.kind} />
+                      </dd>
+                    </div>
                   ))}
-                </ul>
+                  <div>
+                    <dt className="text-xs text-ink-500">Carbon footprint</dt>
+                    <dd className="mt-0.5 text-sm font-semibold text-ink-900">Not calculated</dd>
+                    <p className="text-xs text-ink-500">{passport.calculation.headline}</p>
+                  </div>
+                </dl>
+              </Card>
+            )}
+
+            <Card title="Documents in this browser">
+              {workspace.total === 0 ? (
+                <p className="text-sm text-ink-600">No documents are stored yet.</p>
+              ) : (
+                <dl className="grid grid-cols-2 gap-2">
+                  <Stat label="Stored" value={workspace.total} hint={`${workspace.samples} sample · ${workspace.uploads} yours`} />
+                  <Stat label="Read" value={workspace.processed} />
+                  <Stat label="Not read yet" value={unread} />
+                  <Stat label="Could not be read" value={workspace.failed} />
+                </dl>
               )}
-              <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                <p className="text-ink-600">
-                  <span className="font-semibold text-ink-900">{passport.reviewerActions.filter((a) => a.applies).length}</span> human review
-                  {passport.reviewerActions.filter((a) => a.applies).length === 1 ? '' : 's'} recorded
-                  {passport.reviewerActions.some((a) => !a.applies) && ` (${passport.reviewerActions.filter((a) => !a.applies).length} no longer apply)`}.
-                  Reviews are not verification.
-                </p>
-                <p className="text-ink-600 sm:text-right">
-                  <a href={pageHref('validate')} className="font-semibold text-forest-700 underline">
-                    Review issues
-                  </a>{' '}
-                  ·{' '}
-                  <a href={pageHref('export')} className="font-semibold text-forest-700 underline">
-                    Export draft
-                  </a>
-                </p>
-              </div>
             </Card>
-          )}
+          </div>
         </div>
       )}
+
+      <SourceInspector source={inspect} result={inspect ? resultsById[inspect.documentId] : undefined} onClose={() => setInspect(null)} />
+    </div>
+  )
+}
+
+function QuickStartStatus({ state }: { state: QuickStartState }) {
+  if (state.status === 'idle') return null
+  if (state.status === 'error')
+    return (
+      <p role="alert" className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm text-white ring-1 ring-status-missing/60">
+        {state.message}
+      </p>
+    )
+  const p = state.status === 'reading' ? state.progress : null
+  const pct = p ? Math.round(((p.index + (p.progress ?? 0.3)) / p.total) * 100) : 5
+  return (
+    <div role="status" aria-live="polite" className="mt-4 max-w-xl rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Icon name="loader" className="size-4 animate-spin" />
+        {state.status === 'loading-samples'
+          ? 'Loading the sample documents…'
+          : p
+            ? `Reading document ${p.index + 1} of ${p.total} in your browser…`
+            : 'Reading documents in your browser…'}
+      </p>
+      {p && <p className="mt-0.5 truncate text-xs text-forest-200">{p.fileName} · {p.message}</p>}
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15">
+        <div className="h-full rounded-full bg-moss-400 transition-[width]" style={{ width: `${pct}%` }} />
+      </div>
     </div>
   )
 }

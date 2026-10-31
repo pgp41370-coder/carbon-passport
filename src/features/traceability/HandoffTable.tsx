@@ -115,7 +115,7 @@ interface RecordSummaryProps {
 function RecordSummary({ link, state, onAdd, onDelete }: RecordSummaryProps) {
   if (state && !state.active) {
     return (
-      <div className="rounded-lg bg-status-review/10 p-2 text-[11px] text-status-review-ink">
+      <div className="rounded-lg bg-status-review/10 p-2 text-xs text-status-review-ink">
         A note recorded earlier no longer applies: the evidence for this hand-off has changed.{' '}
         <button type="button" onClick={() => onDelete(state.record.id)} className="font-semibold underline">
           Delete note
@@ -126,7 +126,7 @@ function RecordSummary({ link, state, onAdd, onDelete }: RecordSummaryProps) {
   if (state) {
     const { record } = state
     return (
-      <div className="rounded-lg bg-canvas p-2 text-[11px] text-ink-700">
+      <div className="rounded-lg bg-canvas p-2 text-xs text-ink-700">
         <p className="font-semibold text-ink-900">
           {record.kind === 'proposal' ? 'Proposed link (not source-backed)' : 'Review note'}
           {record.proposedReference ? `: ${record.proposedReference}` : ''}
@@ -152,7 +152,7 @@ function RecordSummary({ link, state, onAdd, onDelete }: RecordSummaryProps) {
     <button
       type="button"
       onClick={() => onAdd(link)}
-      className="rounded-lg px-2 py-1 text-[11px] font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
+      className="rounded-lg px-2 py-1 text-xs font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
     >
       {link.status === 'missing' ? 'Add note or propose link' : 'Add review note'}
     </button>

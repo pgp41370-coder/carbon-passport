@@ -68,14 +68,14 @@ export function ExportPage() {
           <p className="font-semibold text-ink-900">Nothing to export yet</p>
           <p className="mt-1 text-sm text-ink-500">
             {workspace.total
-              ? `${workspace.total} document${workspace.total === 1 ? ' is' : 's are'} stored, but no batch has been read from them. Process them first.`
-              : 'Upload documents or load the synthetic sample pack, then process them.'}
+              ? `${workspace.total} document${workspace.total === 1 ? ' is' : 's are'} stored, but no batch has been read from them yet. Read them first.`
+              : 'Upload documents or try the sample documents; they are read automatically.'}
           </p>
           <a
             href={pageHref(workspace.total ? 'validate' : 'upload')}
             className="mt-4 inline-flex rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-800"
           >
-            {workspace.total ? 'Go to Extraction & Validation' : 'Go to Document Upload'}
+            {workspace.total ? 'Go to Check documents' : 'Go to Upload documents'}
           </a>
         </div>
       )}
@@ -106,7 +106,7 @@ export function ExportPage() {
                   {workspace.notProcessed + workspace.outdated} stored document{workspace.notProcessed + workspace.outdated === 1 ? ' is' : 's are'} not
                   processed and will be listed as not used.{' '}
                   <a href={pageHref('validate')} className="font-semibold underline">
-                    Process now
+                    Read them now
                   </a>
                 </p>
               )}
@@ -118,7 +118,7 @@ export function ExportPage() {
             <ul className="space-y-2">
               {passport.issues.map((issue) => (
                 <li key={issue.id} className="flex flex-wrap items-start gap-2 text-sm text-ink-700">
-                  <span className="rounded-full bg-status-missing/10 px-2 py-0.5 text-[11px] font-semibold text-status-missing">
+                  <span className="rounded-full bg-status-missing/10 px-2 py-0.5 text-xs font-semibold text-status-missing">
                     {issue.severity} issue
                   </span>
                   <span>
@@ -136,13 +136,13 @@ export function ExportPage() {
                 .filter((p) => !p.met)
                 .map((p) => (
                   <li key={p.id} className="flex flex-wrap items-start gap-2 text-sm text-ink-700">
-                    <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-semibold text-ink-700 ring-1 ring-line">Calculation input</span>
+                    <span className="rounded-full bg-canvas px-2 py-0.5 text-xs font-semibold text-ink-700 ring-1 ring-line">Calculation input</span>
                     {p.label}: {p.detail}
                   </li>
                 ))}
               {passport.excludedDocuments.map((d) => (
                 <li key={d.fileName} className="flex flex-wrap items-start gap-2 text-sm text-ink-700">
-                  <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-semibold text-ink-700 ring-1 ring-line">Not used</span>
+                  <span className="rounded-full bg-canvas px-2 py-0.5 text-xs font-semibold text-ink-700 ring-1 ring-line">Not used</span>
                   {d.fileName}: {d.reason}
                 </li>
               ))}
@@ -177,7 +177,7 @@ export function ExportPage() {
                 <div key={option.title} className="flex flex-col rounded-xl border border-line p-4">
                   <p className="font-semibold text-ink-900">{option.title}</p>
                   <p className="mt-1 flex-1 text-sm text-ink-600">{option.body}</p>
-                  <p className="mt-2 text-[11px] break-all text-ink-500">{option.meta}</p>
+                  <p className="mt-2 text-xs break-all text-ink-500">{option.meta}</p>
                   <button
                     type="button"
                     onClick={option.action}

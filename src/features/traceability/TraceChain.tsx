@@ -51,13 +51,13 @@ export function TraceChain({ stages, links, onSelectStage, onSelectLink }: Trace
                   <TraceStatusChip status={stage.status} size="sm" />
                 </span>
                 <span className="mt-2 text-xs font-medium break-words text-ink-700">{stage.headline}</span>
-                <span className="mt-1 text-[11px] text-ink-500">{stage.role}</span>
+                <span className="mt-1 text-xs text-ink-500">{stage.role}</span>
                 {stage.illustrative && (
                   <span className="mt-2">
                     <IllustrativeTag />
                   </span>
                 )}
-                <span className="mt-auto pt-2 text-[11px] font-semibold text-forest-700 group-hover:underline">Details</span>
+                <span className="mt-auto pt-2 text-xs font-semibold text-forest-700 group-hover:underline">Details</span>
                 </span>
               </button>
             </li>
@@ -72,11 +72,11 @@ export function TraceChain({ stages, links, onSelectStage, onSelectLink }: Trace
                   <span aria-hidden="true" className={`h-5 w-1 rounded-full xl:h-1 xl:w-8 ${TRACE_STATUS[link.status].line} ${link.status === 'missing' ? 'opacity-60' : ''}`} />
                   <span
                     aria-hidden="true"
-                    className={`grid size-6 place-items-center rounded-full text-[11px] font-bold text-white ${TRACE_STATUS[link.status].line}`}
+                    className={`grid size-6 place-items-center rounded-full text-xs font-bold text-white ${TRACE_STATUS[link.status].line}`}
                   >
                     {link.status === 'supported' ? '✓' : link.status === 'missing' ? '?' : '!'}
                   </span>
-                  <span aria-hidden="true" className="text-[11px] font-medium text-ink-500 xl:hidden">
+                  <span aria-hidden="true" className="text-xs font-medium text-ink-500 xl:hidden">
                     Hand-off: {TRACE_STATUS[link.status].label.toLowerCase()}
                   </span>
                   <span className="sr-only">View hand-off details</span>

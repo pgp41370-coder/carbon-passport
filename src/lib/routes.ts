@@ -11,7 +11,7 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'upload',
     path: '/upload',
-    label: 'Document Upload',
+    label: 'Upload documents',
     summary:
       'Add invoices, mill certificates, job-work challans, bills and logs as PDF, image, CSV or Excel files. Files will be read in your browser only.',
     step: { number: 1, label: 'Upload' },
@@ -19,18 +19,18 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'validate',
     path: '/validate',
-    label: 'Extraction & Validation',
+    label: 'Check documents',
     summary:
       'Review the values extracted from each document, confirm or correct them, and see which checks pass or need attention.',
-    step: { number: 2, label: 'Validate' },
+    step: { number: 2, label: 'Check' },
   },
   {
     id: 'traceability',
     path: '/traceability',
-    label: 'Supply-Chain Traceability',
+    label: 'Supply chain',
     summary:
       'Follow the batch from the steel heat number through in-house production and the outsourced heat-treatment job-worker.',
-    step: { number: 3, label: 'Trace' },
+    step: { number: 3, label: 'Supply chain' },
   },
   {
     id: 'passport',
@@ -43,10 +43,10 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'export',
     path: '/export',
-    label: 'Export & Download',
+    label: 'Download',
     summary:
       'Download the reviewed draft and its evidence index to share with a buyer, clearly marked as not certified.',
-    step: { number: 5, label: 'Export' },
+    step: { number: 5, label: 'Download' },
   },
 ]
 

@@ -280,7 +280,7 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
   }))
 
   const excludedDocuments = [
-    ...trace.unprocessed.map((d) => ({ fileName: d.fileName, reason: 'Not processed yet' })),
+    ...trace.unprocessed.map((d) => ({ fileName: d.fileName, reason: 'Not read yet' })),
     ...current.filter((r) => r.status === 'failed').map((r) => ({ fileName: r.fileName, reason: `Extraction failed: ${r.error?.message ?? 'unknown error'}` })),
     ...trace.otherBatchDocuments.map((fileName) => ({ fileName, reason: 'Refers to a different batch' })),
   ]

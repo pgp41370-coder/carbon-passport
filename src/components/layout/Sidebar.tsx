@@ -44,7 +44,7 @@ export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
                   <span className="flex-1">{page.label}</span>
                   {page.step && (
                     <span
-                      className={`grid size-5 place-items-center rounded-full text-[11px] tabular-nums ${
+                      className={`grid size-5 place-items-center rounded-full text-xs tabular-nums ${
                         isCurrent ? 'bg-moss-400 text-forest-950' : 'bg-white/5 text-forest-300'
                       }`}
                     >

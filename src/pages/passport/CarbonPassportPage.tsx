@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Card } from '../../components/Card'
 import { Icon } from '../../components/Icon'
+import { NextStep } from '../../components/NextStep'
 import { ClaimList } from '../../features/passport/ClaimList'
 import { downloadText, exportFileName, passportToHtml, passportToJson } from '../../features/passport/exportPassport'
 import { CLAIM_LABELS, PASSPORT_DISCLAIMER } from '../../features/passport/passportLabels'
@@ -15,7 +16,21 @@ import type { ClaimKind } from '../../types/passport'
 
 const page = getPage('passport')
 
-function Section({ number, title, id, children }: { number: number; title: string; id: string; children: ReactNode }) {
+function Section({ number, title, id, children, collapsed }: { number: number; title: string; id: string; children: ReactNode; collapsed?: boolean }) {
+  if (collapsed)
+    return (
+      <details className="group rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(21_26_24/0.04)] sm:p-6">
+        <summary className="flex cursor-pointer items-center gap-2 text-base font-semibold text-ink-900 select-none">
+          <span className="grid size-6 place-items-center rounded-full bg-forest-50 text-xs font-semibold text-forest-700 tabular-nums">{number}</span>
+          <h2 id={id} className="inline">
+            {title}
+          </h2>
+          <span className="ml-auto text-xs font-normal text-forest-700 group-open:hidden">Show details</span>
+          <span className="ml-auto hidden text-xs font-normal text-forest-700 group-open:inline">Hide details</span>
+        </summary>
+        <div className="mt-4 space-y-4">{children}</div>
+      </details>
+    )
   return (
     <section aria-labelledby={id} className="rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(21_26_24/0.04)] sm:p-6">
       <h2 id={id} className="flex items-center gap-2 text-base font-semibold text-ink-900">
@@ -69,7 +84,7 @@ export function CarbonPassportPage() {
             href={pageHref(documentCount ? 'validate' : 'upload')}
             className="mt-4 inline-flex rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-800"
           >
-            {documentCount ? 'Go to Extraction & Validation' : 'Go to Document Upload'}
+            {documentCount ? 'Go to Check documents' : 'Go to Upload documents'}
           </a>
         </div>
       )}
@@ -192,7 +207,7 @@ export function CarbonPassportPage() {
             </div>
           </Section>
 
-          <Section number={6} title="Missing evidence, mismatches and reviewer actions" id="pp-gaps">
+          <Section number={6} title="Problems, missing items and reviews" id="pp-gaps">
             {passport.issues.map((issue) => (
               <div key={issue.id} className="rounded-xl border border-line bg-canvas/50 p-4">
                 <p className="text-xs font-semibold text-status-missing uppercase">{issue.severity} priority</p>
@@ -224,7 +239,7 @@ export function CarbonPassportPage() {
             <div>
               <h3 className="text-sm font-semibold text-ink-900">Reviewer actions</h3>
               {passport.reviewerActions.length === 0 ? (
-                <p className="mt-1 text-sm text-ink-500">None recorded. Add notes in Extraction & Validation or Traceability.</p>
+                <p className="mt-1 text-sm text-ink-500">None recorded. Add notes in Check documents or Supply chain.</p>
               ) : (
                 <ul className="mt-2 space-y-1.5 text-sm text-ink-700">
                   {passport.reviewerActions.map((a, i) => (
@@ -252,7 +267,7 @@ export function CarbonPassportPage() {
             )}
           </Section>
 
-          <Section number={7} title="Evidence register" id="pp-evidence">
+          <Section number={7} title="Evidence register" id="pp-evidence" collapsed>
             {passport.evidence.map((row) => (
               <div key={row.documentId}>
                 <h3 className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-900">
@@ -265,7 +280,7 @@ export function CarbonPassportPage() {
             ))}
           </Section>
 
-          <Section number={8} title="Methodology, assumptions and limitations" id="pp-method">
+          <Section number={8} title="Methodology, assumptions and limitations" id="pp-method" collapsed>
             {[
               ['How this draft was produced', passport.methodology],
               ['Assumptions', passport.assumptions.length ? passport.assumptions : ['None.']],
@@ -281,6 +296,12 @@ export function CarbonPassportPage() {
               </div>
             ))}
           </Section>
+
+          <NextStep
+            to="export"
+            title="Next: Download"
+            body="Save this draft as a printable page or a data file to share with a reviewer."
+          />
         </>
       )}
 

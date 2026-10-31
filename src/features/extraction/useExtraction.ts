@@ -31,7 +31,8 @@ export interface RunState {
 
 /** Documents that have never been processed, or were processed by an older extractor. */
 export function needsProcessing(result: ExtractionResult | undefined) {
-  return !result || result.extractorVersion !== EXTRACTOR_VERSION
+  // A failure caused by an app update is not about the document, so it is read again.
+  return !result || result.extractorVersion !== EXTRACTOR_VERSION || result.error?.code === 'app-updated'
 }
 
 export function useExtraction() {

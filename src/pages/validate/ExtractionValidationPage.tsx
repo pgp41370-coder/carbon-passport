@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '../../components/Icon'
+import { NextStep } from '../../components/NextStep'
 import { WorkflowModeBanner } from '../../components/WorkflowModeBanner'
 import { getDocumentFile } from '../../features/documents/documentStore'
 import { ValidationPanel } from '../../features/evidence/ValidationPanel'
@@ -71,15 +72,15 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
       {mode && (
         <WorkflowModeBanner mode={mode}>
           {mode === 'demo'
-            ? 'Process the synthetic sample pack, then open the heat-number issue and inspect both source values.'
-            : 'Process your documents, then review each issue against its source before moving on.'}
+            ? 'The sample documents are read automatically. Open the heat-number problem and look at both source values.'
+            : 'Your documents are read automatically after upload. Check each problem against its source before moving on.'}
         </WorkflowModeBanner>
       )}
 
       <div className="flex gap-3 rounded-2xl border border-line bg-surface p-4 text-sm text-ink-700 sm:p-5">
         <Icon name="lock" className="mt-0.5 size-5 shrink-0 text-forest-700" />
         <p>
-          Parsing runs on this device. For images and scanned PDFs, the OCR engine downloads English language data once from{' '}
+          Documents are read on this device. To read scanned images, the app downloads English language data once from{' '}
           <span className="font-medium">cdn.jsdelivr.net</span> and caches it; document contents are never sent there or anywhere
           else.
         </p>
@@ -106,7 +107,7 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-800"
           >
             <Icon name="arrow-left" className="size-4" />
-            Go to Document Upload
+            Go to Upload documents
           </a>
         </div>
       )}
@@ -118,9 +119,9 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
               <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 {[
                   ['Documents', x.documents.length],
-                  ['Processed', processed.length],
-                  ['To process', pending.length],
-                  ['Failed', failed.length],
+                  ['Read', processed.length],
+                  ['Not read yet', pending.length],
+                  ['Could not be read', failed.length],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <dt className="text-xs text-ink-500">{label}</dt>
@@ -136,7 +137,7 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
                   className="inline-flex items-center gap-2 rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Icon name={busy ? 'loader' : 'play'} className={`size-4 ${busy ? 'animate-spin' : ''}`} />
-                  {busy ? 'Processing…' : pending.length ? `Process ${pending.length} document${pending.length === 1 ? '' : 's'}` : 'All processed'}
+                  {busy ? 'Reading…' : pending.length ? `Read ${pending.length} document${pending.length === 1 ? '' : 's'}` : 'All read'}
                 </button>
                 <button
                   type="button"
@@ -144,7 +145,7 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
                   onClick={() => start(x.documents)}
                   className="rounded-xl px-4 py-2.5 text-sm font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Reprocess all
+                  Read all again
                 </button>
               </div>
             </div>
@@ -166,7 +167,7 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
             )}
             {x.runError && (
               <p role="alert" className="mt-3 text-sm text-status-missing">
-                Processing stopped: {x.runError}{' '}
+                Reading stopped: {x.runError}{' '}
                 <button type="button" onClick={x.dismissRunError} className="font-semibold underline">
                   Dismiss
                 </button>
@@ -221,6 +222,15 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
               />
             ))}
           </section>
+
+          {processed.length > 0 && !busy && (
+            <NextStep
+              to="traceability"
+              mode={mode}
+              title="Next: Supply chain"
+              body="See how the batch moved from steel supplier to job-worker and back, and which hand-offs are proven."
+            />
+          )}
         </>
       )}
     </div>

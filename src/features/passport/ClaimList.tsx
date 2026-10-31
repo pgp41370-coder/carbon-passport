@@ -14,7 +14,7 @@ const KIND_STYLE: Record<ClaimKind, string> = {
 
 export function ClaimKindChip({ kind }: { kind: ClaimKind }) {
   return (
-    <span title={CLAIM_LABELS[kind].meaning} className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${KIND_STYLE[kind]}`}>
+    <span title={CLAIM_LABELS[kind].meaning} className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${KIND_STYLE[kind]}`}>
       {CLAIM_LABELS[kind].label}
     </span>
   )
@@ -49,7 +49,7 @@ export function ClaimList({ claims, onInspect }: ClaimListProps) {
                   onClick={() => onInspect(source)}
                   className="font-semibold text-forest-700 underline underline-offset-2 hover:text-forest-900 focus-visible:outline-2 focus-visible:outline-forest-500"
                 >
-                  Inspect<span className="sr-only"> {claim.label} in {source.fileName}</span>
+                  Show source<span className="sr-only"> for {claim.label} in {source.fileName}</span>
                 </button>
               </p>
             ))}

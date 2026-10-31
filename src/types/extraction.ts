@@ -5,7 +5,7 @@ export const EXTRACTOR_VERSION = 1
 
 export type ExtractionMethod = 'pdf-text' | 'pdf-ocr' | 'pdf-mixed' | 'image-ocr' | 'csv' | 'spreadsheet'
 
-export type ExtractionErrorCode = 'password' | 'unreadable' | 'empty' | 'unsupported' | 'missing-file' | 'ocr-failed' | 'unknown'
+export type ExtractionErrorCode = 'password' | 'unreadable' | 'empty' | 'unsupported' | 'missing-file' | 'ocr-failed' | 'app-updated' | 'unknown'
 
 /** Where a value came from. Only the parts the parser actually knows are filled in. */
 export interface SourceRef {

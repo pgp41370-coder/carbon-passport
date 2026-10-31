@@ -13,8 +13,8 @@ import type {
 import { describeSource } from '../extraction/sourceRef'
 
 const OUTCOME: Record<CheckOutcome, { label: string; icon: IconName; className: string }> = {
-  issue: { label: 'Issue found', icon: 'alert', className: 'text-status-missing' },
-  passed: { label: 'No issue found', icon: 'check-circle', className: 'text-status-verified' },
+  issue: { label: 'Problem found', icon: 'alert', className: 'text-status-missing' },
+  passed: { label: 'OK', icon: 'check-circle', className: 'text-status-verified' },
   not_applicable: { label: 'Not checked', icon: 'info', className: 'text-ink-500' },
 }
 
@@ -61,7 +61,7 @@ export function ValidationPanel({ checks, issues, reviews, hasResults, onInspect
       ) : (
         <div className="space-y-5">
           <p className="text-xs text-ink-500">
-            Deterministic rules applied to the extracted values. A check can only compare what was read; it does not correct
+            Fixed rules compare the values found across documents. They only compare what was read; they never correct
             values or fill gaps.
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -116,14 +116,14 @@ function IssueCard({ issue, review, onInspect, onSaveReview, onClearReview }: Is
   return (
     <li className="rounded-xl border border-line bg-canvas/50 p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${severity.className}`}>{severity.label} priority</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${severity.className}`}>{severity.label} priority</span>
         {usesSamples && (
-          <span className="rounded-full border border-status-review/30 bg-status-review/10 px-2 py-0.5 text-[11px] font-semibold text-status-review-ink">
+          <span className="rounded-full border border-status-review/30 bg-status-review/10 px-2 py-0.5 text-xs font-semibold text-status-review-ink">
             From synthetic sample documents
           </span>
         )}
         {review && (
-          <span className="rounded-full bg-forest-50 px-2 py-0.5 text-[11px] font-semibold text-forest-700 ring-1 ring-forest-100">
+          <span className="rounded-full bg-forest-50 px-2 py-0.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-100">
             Reviewed · still open
           </span>
         )}
@@ -217,7 +217,7 @@ function IssueCard({ issue, review, onInspect, onSaveReview, onClearReview }: Is
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
+            className="min-h-10 rounded-lg px-3 py-1.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
           >
             Record review
           </button>
@@ -311,7 +311,7 @@ function ReviewForm({ issue, initial, onCancel, onSave }: ReviewFormProps) {
         >
           Save review
         </button>
-        <button type="button" onClick={onCancel} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-700 ring-1 ring-line hover:bg-canvas">
+        <button type="button" onClick={onCancel} className="min-h-10 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-700 ring-1 ring-line hover:bg-canvas">
           Cancel
         </button>
       </div>

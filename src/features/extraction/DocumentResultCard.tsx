@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Icon, type IconName } from '../../components/Icon'
 import type { DocumentFormat, StoredDocument } from '../../types/document'
 import type { ExtractionMethod, ExtractionResult, SourceRef } from '../../types/extraction'
@@ -18,24 +18,24 @@ const FORMAT_ICON: Record<DocumentFormat, IconName> = {
 }
 
 const METHOD_LABEL: Record<ExtractionMethod, string> = {
-  'pdf-text': 'PDF text layer (PDF.js)',
-  'pdf-ocr': 'Scanned PDF, read with OCR (PDF.js + Tesseract.js)',
-  'pdf-mixed': 'PDF text layer plus OCR for scanned pages',
-  'image-ocr': 'Image, read with OCR (Tesseract.js)',
-  csv: 'CSV rows (Papa Parse)',
-  spreadsheet: 'Workbook sheets (SheetJS)',
+  'pdf-text': 'PDF text, read directly',
+  'pdf-ocr': 'Scanned PDF, read with text recognition',
+  'pdf-mixed': 'PDF text, plus text recognition for scanned pages',
+  'image-ocr': 'Image, read with text recognition',
+  csv: 'CSV rows',
+  spreadsheet: 'Excel sheets',
 }
 
 type CardStatus = { label: string; className: string; icon: IconName; spin?: boolean }
 
 function statusFor(result: ExtractionResult | undefined, isRunning: boolean, isQueued: boolean): CardStatus {
-  if (isRunning) return { label: 'Processing', className: 'bg-forest-50 text-forest-700', icon: 'loader', spin: true }
+  if (isRunning) return { label: 'Reading', className: 'bg-forest-50 text-forest-700', icon: 'loader', spin: true }
   if (isQueued) return { label: 'Queued', className: 'bg-canvas text-ink-600', icon: 'loader' }
-  if (!result) return { label: 'Not processed', className: 'bg-canvas text-ink-600', icon: 'info' }
-  if (needsProcessing(result)) return { label: 'Outdated result', className: 'bg-status-review/10 text-status-review-ink', icon: 'alert' }
-  if (result.status === 'failed') return { label: 'Failed', className: 'bg-status-missing/10 text-status-missing', icon: 'x-circle' }
-  if (result.status === 'warning') return { label: 'Extracted · review', className: 'bg-status-review/10 text-status-review-ink', icon: 'alert' }
-  return { label: 'Extracted', className: 'bg-forest-50 text-forest-700', icon: 'check-circle' }
+  if (!result) return { label: 'Not read yet', className: 'bg-canvas text-ink-600', icon: 'info' }
+  if (needsProcessing(result)) return { label: 'Read again needed', className: 'bg-status-review/10 text-status-review-ink', icon: 'alert' }
+  if (result.status === 'failed') return { label: 'Could not read', className: 'bg-status-missing/10 text-status-missing', icon: 'x-circle' }
+  if (result.status === 'warning') return { label: 'Read · needs check', className: 'bg-status-review/10 text-status-review-ink', icon: 'alert' }
+  return { label: 'Read', className: 'bg-forest-50 text-forest-700', icon: 'check-circle' }
 }
 
 interface DocumentResultCardProps {
@@ -69,6 +69,13 @@ export function DocumentResultCard({
   const status = statusFor(result, isRunning, queued && !isRunning)
   const isSample = document.origin === 'sample'
   const bodyId = `result-${document.id}`
+  // Raw content is long; keep it closed unless the user opens it or inspects a source in it.
+  const [rawOpen, setRawOpen] = useState(highlight?.documentId === document.id)
+  const [seenHighlight, setSeenHighlight] = useState(highlight)
+  if (highlight !== seenHighlight) {
+    setSeenHighlight(highlight)
+    if (highlight?.documentId === document.id) setRawOpen(true)
+  }
 
   // Bring an inspected source line or row into view once it is rendered.
   useEffect(() => {
@@ -79,7 +86,7 @@ export function DocumentResultCard({
     const target = element?.querySelector('[data-source-highlight]') ?? element
     target?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
     element?.focus({ preventScroll: true })
-  }, [expanded, highlight])
+  }, [expanded, highlight, rawOpen])
 
   return (
     <article
@@ -99,7 +106,7 @@ export function DocumentResultCard({
               {document.fileName}
             </h3>
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                 isSample ? 'bg-status-review/10 text-status-review-ink ring-1 ring-status-review/30' : 'bg-forest-50 text-forest-700 ring-1 ring-forest-100'
               }`}
             >
@@ -143,9 +150,9 @@ export function DocumentResultCard({
             type="button"
             onClick={onProcess}
             disabled={disabled}
-            className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {result ? 'Reprocess' : 'Process'}
+            {result ? 'Read again' : 'Read'}
           </button>
           {result && (
             <button
@@ -155,7 +162,7 @@ export function DocumentResultCard({
               aria-controls={bodyId}
               className="inline-flex items-center gap-1 rounded-lg bg-forest-950 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500"
             >
-              {expanded ? 'Hide results' : 'View results'}
+              {expanded ? 'Hide' : 'See what was read'}
             </button>
           )}
         </div>
@@ -167,7 +174,7 @@ export function DocumentResultCard({
             <div role="alert" className="flex gap-3 rounded-xl border border-status-missing/30 bg-status-missing/[0.06] p-4 text-sm">
               <Icon name="x-circle" className="mt-0.5 size-5 shrink-0 text-status-missing" />
               <div>
-                <p className="font-semibold text-ink-900">Extraction failed</p>
+                <p className="font-semibold text-ink-900">Could not read this document</p>
                 <p className="mt-1 text-ink-700">{result.error.message}</p>
                 <p className="mt-1 text-xs text-ink-500">No fields were mapped and no values were assumed for this document.</p>
               </div>
@@ -187,23 +194,23 @@ export function DocumentResultCard({
           {result.status !== 'failed' && (
             <section aria-labelledby={`${bodyId}-fields`}>
               <h4 id={`${bodyId}-fields`} className="text-sm font-semibold text-ink-900">
-                Detected fields
+                What we found
               </h4>
-              <p className="mb-2 text-xs text-ink-500">
-                Inferred from the raw content by label and position rules. These are not verified facts; inspect each source.
-              </p>
+              <p className="mb-2 text-xs text-ink-500">Read by fixed label and position rules. Not verified facts; open each source to check.</p>
               <FieldList fields={result.fields} onInspect={onInspect} />
             </section>
           )}
 
           {result.status !== 'failed' && (
-            <section aria-labelledby={`${bodyId}-raw`}>
-              <h4 id={`${bodyId}-raw`} className="text-sm font-semibold text-ink-900">
-                Extracted content (raw)
-              </h4>
-              <p className="mb-2 text-xs text-ink-500">Exactly as read by the parser, with page and line or row numbers.</p>
-              <RawContentView result={result} highlight={highlight} />
-            </section>
+            <details open={rawOpen} onToggle={(event) => setRawOpen(event.currentTarget.open)} className="group">
+              <summary className="cursor-pointer text-sm font-semibold text-ink-900 select-none">
+                Show full document text
+                <span className="ml-2 text-xs font-normal text-ink-500">exactly as read, with page and line or row numbers</span>
+              </summary>
+              <div className="mt-2">
+                <RawContentView result={result} highlight={highlight} />
+              </div>
+            </details>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-xs text-ink-500">
@@ -214,7 +221,7 @@ export function DocumentResultCard({
             <button
               type="button"
               onClick={onOpenOriginal}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
+              className="inline-flex items-center gap-1.5 min-h-10 rounded-lg px-2.5 py-1.5 font-semibold text-forest-700 ring-1 ring-forest-200 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
             >
               <Icon name="file-text" className="size-3.5" />
               Open original file

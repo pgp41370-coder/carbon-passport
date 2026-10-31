@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SAMPLE_PACK_BATCH_ID, SAMPLE_PACK_FILES, samplePackUrl } from '../../data/samplePack'
+import { SAMPLE_PACK_BATCH_ID } from '../../data/samplePack'
 import { getStorageEstimate, isQuotaError, StorageUnavailableError, type StorageEstimate } from '../../lib/db'
 import { toErrorMessage } from '../../lib/errors'
 import type { StoredDocument } from '../../types/document'
@@ -9,9 +9,10 @@ import {
   getDocumentFile,
   listDocuments,
   removeDocument,
-  replaceSampleDocuments,
   type NewDocument,
 } from './documentStore'
+import { documentsToRead, readDocuments, type ReadOutcome, type ReadProgress } from '../extraction/processDocuments'
+import { loadSamplePackIntoStorage } from './samplePackLoader'
 import { validateFile } from './fileTypes'
 
 export type FeedbackTone = 'success' | 'warning' | 'error'
@@ -37,7 +38,7 @@ export interface PendingFile {
 
 export type LoadState = { status: 'loading' } | { status: 'ready' } | { status: 'unavailable'; message: string }
 
-export type BusyAction = 'upload' | 'samples' | 'remove' | 'clear'
+export type BusyAction = 'upload' | 'samples' | 'reading' | 'remove' | 'clear'
 
 const QUOTA_MESSAGE =
   'Browser storage is full. Remove some documents or free up space on this device, then try again.'
@@ -59,11 +60,29 @@ export function useDocuments() {
   const [busy, setBusy] = useState<BusyAction | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [storage, setStorage] = useState<StorageEstimate | null>(null)
+  const [reading, setReading] = useState<ReadProgress | null>(null)
+  const [readResult, setReadResult] = useState<(ReadOutcome & { error?: string }) | null>(null)
 
   const refresh = useCallback(async () => {
     const [docs, estimate] = await Promise.all([listDocuments(), getStorageEstimate()])
     setDocuments(docs)
     setStorage(estimate)
+  }, [])
+
+  /** Reads every stored document that has no current result, so users never need a separate step. */
+  const readNew = useCallback(async () => {
+    const pendingDocs = await documentsToRead()
+    if (pendingDocs.length === 0) return
+    setBusy('reading')
+    setReadResult(null)
+    try {
+      const outcome = await readDocuments(pendingDocs, setReading)
+      setReadResult(outcome)
+    } catch (error) {
+      setReadResult({ read: 0, failed: pendingDocs.length, problems: 0, error: toErrorMessage(error) })
+    } finally {
+      setReading(null)
+    }
   }, [])
 
   // Restore the stored list on first render (e.g. after a page refresh).
@@ -166,9 +185,10 @@ export function useDocuments() {
       const parts = [saved ? `${plural(saved, 'file')} saved in this browser` : 'No files were saved']
       if (problems) parts.push(`${plural(problems, 'file')} not added`)
       setFeedback({ tone, title: parts.join(' · '), notes })
+      if (saved > 0) await readNew()
       setBusy(null)
     },
-    [busy, refresh, storage],
+    [busy, readNew, refresh, storage],
   )
 
   const loadSamplePack = useCallback(async () => {
@@ -177,28 +197,14 @@ export function useDocuments() {
     setFeedback(null)
     const isReload = documents.some((doc) => doc.origin === 'sample')
     try {
-      const inputs = await Promise.all(
-        SAMPLE_PACK_FILES.map(async (file): Promise<NewDocument> => {
-          const response = await fetch(samplePackUrl(file))
-          if (!response.ok) throw new Error(`${file.fileName} could not be fetched (HTTP ${response.status}).`)
-          const blob = await response.blob()
-          return {
-            originalFileName: file.fileName,
-            format: file.format,
-            mimeType: file.mimeType,
-            blob: new Blob([blob], { type: file.mimeType }),
-            origin: 'sample',
-            sampleKey: file.key,
-          }
-        }),
-      )
-      await replaceSampleDocuments(inputs)
+      const count = await loadSamplePackIntoStorage()
       await refresh()
       setFeedback({
         tone: 'success',
-        title: `Synthetic sample pack ${isReload ? 'reloaded' : 'loaded'}: ${plural(inputs.length, 'document')} for batch ${SAMPLE_PACK_BATCH_ID}`,
+        title: `Synthetic sample pack ${isReload ? 'reloaded' : 'loaded'}: ${plural(count, 'document')} for batch ${SAMPLE_PACK_BATCH_ID}`,
         notes: [],
       })
+      await readNew()
     } catch (error) {
       const message =
         error instanceof TypeError
@@ -209,12 +215,13 @@ export function useDocuments() {
       setFeedback({ tone: 'error', title: 'Sample pack not loaded', notes: [{ fileName: 'Sample pack', message, kind: 'failed' }] })
     }
     setBusy(null)
-  }, [busy, documents, refresh])
+  }, [busy, documents, readNew, refresh])
 
   const remove = useCallback(
     async (document: StoredDocument) => {
       if (busy) return
       setBusy('remove')
+      setReadResult(null)
       try {
         await removeDocument(document.id)
         await refresh()
@@ -234,6 +241,7 @@ export function useDocuments() {
   const clearAll = useCallback(async () => {
     if (busy) return
     setBusy('clear')
+    setReadResult(null)
     const count = documents.length
     try {
       await clearAllDocuments()
@@ -276,6 +284,8 @@ export function useDocuments() {
     busy,
     feedback,
     storage,
+    reading,
+    readResult,
     dismissFeedback: () => setFeedback(null),
     addFiles,
     loadSamplePack,

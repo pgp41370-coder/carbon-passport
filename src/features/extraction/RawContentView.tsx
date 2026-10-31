@@ -22,7 +22,7 @@ export function RawContentView({ result, highlight }: RawContentViewProps) {
           <section key={page.pageNumber} aria-label={`Page ${page.pageNumber}`}>
             <p className="sticky -top-3 z-10 -mx-3 mb-1 bg-canvas px-4 py-1.5 text-xs font-semibold text-ink-600">
               Page {page.pageNumber} ·{' '}
-              {page.method === 'ocr' ? `OCR · ${page.confidence ?? '–'}% mean confidence` : 'PDF text layer'}
+              {page.method === 'ocr' ? `Read from image · ${page.confidence ?? '–'}% confidence` : 'PDF text'}
             </p>
             <ol className="font-mono text-[12px] leading-relaxed">
               {page.lines.map((line) => {
@@ -36,13 +36,13 @@ export function RawContentView({ result, highlight }: RawContentViewProps) {
                     tabIndex={isHighlighted ? -1 : undefined}
                     className={`flex gap-3 rounded px-1 outline-none ${isHighlighted ? 'bg-moss-400/30 ring-2 ring-moss-500' : ''}`}
                   >
-                    <span className="w-7 shrink-0 text-right text-ink-400 select-none tabular-nums">{line.number}</span>
+                    <span className="w-7 shrink-0 text-right text-ink-500 select-none tabular-nums">{line.number}</span>
                     <span
                       className={`min-w-0 break-words whitespace-pre-wrap ${lowConfidence ? 'text-status-review-ink' : 'text-ink-900'}`}
-                      title={line.confidence !== undefined ? `OCR confidence ${line.confidence}%` : undefined}
+                      title={line.confidence !== undefined ? `Reading confidence ${line.confidence}%` : undefined}
                     >
                       {line.text}
-                      {lowConfidence && <span className="ml-2 text-[10px] font-sans font-semibold">low confidence ({line.confidence}%)</span>}
+                      {lowConfidence && <span className="ml-2 text-xs font-sans font-semibold">low confidence ({line.confidence}%)</span>}
                     </span>
                   </li>
                 )

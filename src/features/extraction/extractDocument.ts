@@ -155,6 +155,13 @@ export async function extractDocument(
     }
   } catch (error) {
     const message = (error as Error)?.message ?? String(error)
+    // A new version was deployed while this tab was open, so the old reader code is gone.
+    if (/dynamically imported module|importing a module script failed|module script/i.test(message)) {
+      return fail({
+        code: 'app-updated',
+        message: 'The app was updated while this page was open, so its reader could not load. Reload the page; the document is then read again.',
+      })
+    }
     if (error instanceof ParseError) {
       return fail({
         code: error.code,

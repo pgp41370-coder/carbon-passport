@@ -28,7 +28,7 @@ export function EvidenceList({ evidence, onInspect, empty = 'No supporting docum
                 onClick={() => onInspect(item.source!)}
                 className="font-semibold text-forest-700 underline underline-offset-2 hover:text-forest-900 focus-visible:outline-2 focus-visible:outline-forest-500"
               >
-                Inspect<span className="sr-only"> {item.label} in {item.source.fileName}</span>
+                Show source<span className="sr-only"> for {item.label} in {item.source.fileName}</span>
               </button>
             </span>
           ) : (

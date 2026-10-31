@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StorageUnavailableError } from '../../lib/db'
 import { toErrorMessage } from '../../lib/errors'
 import type { StoredDocument } from '../../types/document'
-import { EXTRACTOR_VERSION, type ExtractionResult, type IssueReview } from '../../types/extraction'
+import type { ExtractionResult, IssueReview } from '../../types/extraction'
 import type { TraceRecord } from '../../types/traceability'
 import { listDocuments } from '../documents/documentStore'
 import { listExtractions, listIssueReviews, purgeOrphanExtractions } from '../extraction/extractionStore'
+import { needsProcessing } from '../extraction/useExtraction'
 import { detectBatchIds } from '../traceability/buildTrace'
 import { listTraceRecords } from '../traceability/traceStore'
 import { DEFAULT_BATCH_ID } from '../traceability/useTraceability'
@@ -39,7 +40,7 @@ export function usePassport() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' })
 
   const reload = useCallback(() => {
-    ;(async () => {
+    return (async () => {
       await purgeOrphanExtractions()
       const [documents, results, issueReviews, traceRecords] = await Promise.all([
         listDocuments(),
@@ -96,9 +97,9 @@ export function usePassport() {
       samples: documents.filter((d) => d.origin === 'sample').length,
       uploads: documents.filter((d) => d.origin === 'user').length,
       processed: documents.filter((d) => resultFor(d.id) && resultFor(d.id)!.status !== 'failed').length,
-      failed: documents.filter((d) => resultFor(d.id)?.status === 'failed').length,
+      failed: documents.filter((d) => resultFor(d.id)?.status === 'failed' && !needsProcessing(resultFor(d.id))).length,
       notProcessed: documents.filter((d) => !resultFor(d.id)).length,
-      outdated: documents.filter((d) => resultFor(d.id) && resultFor(d.id)!.extractorVersion !== EXTRACTOR_VERSION).length,
+      outdated: documents.filter((d) => resultFor(d.id) && needsProcessing(resultFor(d.id))).length,
     }
   }, [snapshot])
 

@@ -120,11 +120,11 @@ function DocumentGroup({ title, count, note, tone = 'user', children }: Document
 
 function OriginTag({ origin }: { origin: StoredDocument['origin'] }) {
   return origin === 'sample' ? (
-    <span className="inline-flex shrink-0 items-center rounded-full border border-status-review/30 bg-status-review/10 px-2 py-0.5 text-[11px] font-semibold text-status-review-ink">
+    <span className="inline-flex shrink-0 items-center rounded-full border border-status-review/30 bg-status-review/10 px-2 py-0.5 text-xs font-semibold text-status-review-ink">
       Synthetic sample
     </span>
   ) : (
-    <span className="inline-flex shrink-0 items-center rounded-full bg-forest-50 px-2 py-0.5 text-[11px] font-semibold text-forest-700 ring-1 ring-forest-100">
+    <span className="inline-flex shrink-0 items-center rounded-full bg-forest-50 px-2 py-0.5 text-xs font-semibold text-forest-700 ring-1 ring-forest-100">
       Your upload
     </span>
   )
