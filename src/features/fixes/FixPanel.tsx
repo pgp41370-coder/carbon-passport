@@ -119,11 +119,20 @@ export function FixPanel({ finding, guide, illustrative, busy, onApply }: FixPan
           <p lang={lang} className="mt-2 text-sm leading-relaxed text-ink-900">
             {guide.message[lang]}
           </p>
-          <button type="button" onClick={() => void copy(guide.message![lang])} className={`${secondary} mt-3`}>
-            <Icon name={copied ? 'check' : 'copy'} className="size-4" />
-            {copied ? 'Copied' : 'Copy message'}
-          </button>
-          <p className="mt-2 text-xs text-ink-600">The app never sends anything. Paste it into WhatsApp or email yourself.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href={whatsappHref(guide.message[lang])} target="_blank" rel="noopener noreferrer" className={secondary}>
+              <Icon name="external" className="size-4" />
+              Open in WhatsApp
+              <span className="sr-only">(opens WhatsApp in a new tab)</span>
+            </a>
+            <button type="button" onClick={() => void copy(guide.message![lang])} className={secondary}>
+              <Icon name={copied ? 'check' : 'copy'} className="size-4" />
+              {copied ? 'Copied' : 'Copy message'}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-ink-600">
+            The app never sends anything. WhatsApp opens with this message filled in; you choose the contact and press send.
+          </p>
         </div>
       )}
 
@@ -180,6 +189,14 @@ export function FixPanel({ finding, guide, illustrative, busy, onApply }: FixPan
       />
     </div>
   )
+}
+
+/**
+ * WhatsApp click-to-chat link with the message prefilled. With no phone number,
+ * WhatsApp asks the user to pick the contact, and the user still presses send.
+ */
+function whatsappHref(text: string) {
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
 /** Drops the batch prefix of sample file names so buttons stay short. */

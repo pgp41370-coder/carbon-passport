@@ -31,6 +31,7 @@ export type IconName =
   | 'replace'
   | 'message'
   | 'sparkle'
+  | 'external'
 
 const PATHS: Record<IconName, ReactNode> = {
   dashboard: (
@@ -214,6 +215,13 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
       <path d="m6.3 6.3 2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1" />
+    </>
+  ),
+  external: (
+    <>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
     </>
   ),
 }
