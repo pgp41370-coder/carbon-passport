@@ -4,9 +4,21 @@ interface SampleDataDisclaimerProps {
   /** True when every document behind the figures is from the synthetic sample pack. */
   illustrative: boolean
   hasDocuments: boolean
+  /** One short line instead of the full notice. */
+  compact?: boolean
 }
 
-export function SampleDataDisclaimer({ illustrative, hasDocuments }: SampleDataDisclaimerProps) {
+export function SampleDataDisclaimer({ illustrative, hasDocuments, compact = false }: SampleDataDisclaimerProps) {
+  if (compact)
+    return (
+      <p className="flex items-start gap-2 rounded-xl bg-status-review/[0.07] px-3 py-2 text-sm text-ink-700 ring-1 ring-status-review/30">
+        <Icon name="info" className="mt-0.5 size-4 shrink-0 text-status-review-ink" />
+        <span>
+          {illustrative && hasDocuments ? 'Sample documents (fictional). ' : ''}
+          Draft only: not a certificate, and no carbon footprint is calculated.
+        </span>
+      </p>
+    )
   return (
     <aside
       aria-labelledby="sample-disclaimer-title"

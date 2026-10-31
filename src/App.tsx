@@ -4,6 +4,7 @@ import { findPageByPath, parseWorkflowMode } from './lib/routes'
 import { useHashLocation } from './lib/router'
 import { ComingNextPage } from './pages/ComingNextPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
+import { FixPage } from './pages/fix/FixPage'
 import { DocumentUploadPage } from './pages/upload/DocumentUploadPage'
 import { ExtractionValidationPage } from './pages/validate/ExtractionValidationPage'
 import { TraceabilityPage } from './pages/trace/TraceabilityPage'
@@ -38,6 +39,8 @@ function App() {
     <AppShell currentPageId={page.id}>
       {page.id === 'dashboard' ? (
         <DashboardPage />
+      ) : page.id === 'fix' ? (
+        <FixPage />
       ) : page.id === 'upload' ? (
         <DocumentUploadPage mode={mode} />
       ) : page.id === 'validate' ? (

@@ -1,6 +1,48 @@
 import { PAGES, pageHref } from '../../lib/routes'
-import type { PageId } from '../../types/navigation'
+import type { PageId, PageRoute } from '../../types/navigation'
 import { Icon } from '../Icon'
+
+interface NavListProps {
+  pages: readonly PageRoute[]
+  currentPageId: PageId
+  onNavigate?: () => void
+  /** Main screens get a larger row; "More" screens stay quiet. */
+  large?: boolean
+}
+
+function NavList({ pages, currentPageId, onNavigate, large = false }: NavListProps) {
+  return (
+    <ul className="space-y-1">
+      {pages.map((page) => {
+        const isCurrent = page.id === currentPageId
+        return (
+          <li key={page.id}>
+            <a
+              href={pageHref(page.id)}
+              onClick={onNavigate}
+              aria-current={isCurrent ? 'page' : undefined}
+              className={`group flex items-center gap-3 rounded-xl px-3 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-300 ${
+                large ? 'min-h-11 text-[15px]' : 'min-h-10 text-sm'
+              } ${
+                isCurrent
+                  ? 'bg-forest-800 text-white shadow-[inset_2px_0_0_var(--color-moss-400)]'
+                  : large
+                    ? 'text-forest-100 hover:bg-white/5 hover:text-white'
+                    : 'text-forest-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Icon
+                name={page.id}
+                className={`size-[18px] shrink-0 ${isCurrent ? 'text-moss-400' : 'text-forest-300 group-hover:text-forest-100'}`}
+              />
+              {page.label}
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 interface SidebarProps {
   currentPageId: PageId
@@ -22,52 +64,15 @@ export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
       </div>
 
       <nav aria-label="Main" className="flex-1 px-3">
-        <ul className="space-y-1">
-          {PAGES.map((page) => {
-            const isCurrent = page.id === currentPageId
-            return (
-              <li key={page.id}>
-                <a
-                  href={pageHref(page.id)}
-                  onClick={onNavigate}
-                  aria-current={isCurrent ? 'page' : undefined}
-                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-300 ${
-                    isCurrent
-                      ? 'bg-forest-800 text-white shadow-[inset_2px_0_0_var(--color-moss-400)]'
-                      : 'text-forest-200 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <Icon
-                    name={page.id}
-                    className={`size-[18px] shrink-0 ${isCurrent ? 'text-moss-400' : 'text-forest-300 group-hover:text-forest-100'}`}
-                  />
-                  <span className="flex-1">{page.label}</span>
-                  {page.step && (
-                    <span
-                      className={`grid size-5 place-items-center rounded-full text-xs tabular-nums ${
-                        isCurrent ? 'bg-moss-400 text-forest-950' : 'bg-white/5 text-forest-300'
-                      }`}
-                    >
-                      <span className="sr-only">Step </span>
-                      {page.step.number}
-                    </span>
-                  )}
-                </a>
-              </li>
-            )
-          })}
-        </ul>
+        <NavList pages={PAGES.filter((p) => p.nav === 'main')} currentPageId={currentPageId} onNavigate={onNavigate} large />
+        <p className="mt-8 mb-2 px-3 text-xs font-medium text-forest-300">More</p>
+        <NavList pages={PAGES.filter((p) => p.nav === 'more')} currentPageId={currentPageId} onNavigate={onNavigate} />
       </nav>
 
-      <div className="m-3 rounded-xl bg-white/5 p-4 text-xs leading-relaxed text-forest-200">
-        <p className="flex items-center gap-2 font-medium text-white">
-          <Icon name="lock" className="size-4 text-moss-400" />
-          Browser-only by design
-        </p>
-        <p className="mt-1.5">
-          Documents will be processed on this device. Nothing is uploaded to a server.
-        </p>
-      </div>
+      <p className="m-3 flex items-center gap-2 rounded-xl bg-white/5 p-3 text-xs text-forest-200">
+        <Icon name="lock" className="size-4 shrink-0 text-moss-400" />
+        Your documents stay on this device.
+      </p>
     </div>
   )
 }

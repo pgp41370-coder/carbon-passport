@@ -181,7 +181,7 @@ export function WhatWeFound({ passport, onInspect, fix }: WhatWeFoundProps) {
   )
 }
 
-function FixStatus({ state, counts, onDismiss }: { state: FixState; counts: Record<FindingGroup, number>; onDismiss: () => void }) {
+export function FixStatus({ state, counts, onDismiss }: { state: FixState; counts: Record<FindingGroup, number>; onDismiss: () => void }) {
   if (state.status === 'idle') return null
   if (state.status === 'working') {
     const p = state.progress
