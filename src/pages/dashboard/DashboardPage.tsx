@@ -5,6 +5,7 @@ import { usePassport, type WorkspaceSummary } from '../../features/passport/useP
 import { pageHref } from '../../lib/routes'
 import { toHref } from '../../lib/router'
 import type { CarbonPassport } from '../../types/passport'
+import { HomeCharts } from './HomeCharts'
 import { SampleDataDisclaimer } from './SampleDataDisclaimer'
 import { useQuickStart, type QuickStartState } from './useQuickStart'
 
@@ -173,6 +174,8 @@ export function DashboardPage() {
               ))}
             </ol>
           </section>
+
+          <HomeCharts passport={passport} />
 
           {unread > 0 ? (
             // Documents changed or the reading rules were updated: read again before fixing anything.
