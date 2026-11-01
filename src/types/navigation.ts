@@ -1,4 +1,4 @@
-export type PageId = 'dashboard' | 'fix' | 'upload' | 'validate' | 'traceability' | 'passport' | 'export'
+export type PageId = 'dashboard' | 'fix' | 'views' | 'upload' | 'validate' | 'traceability' | 'passport' | 'emissions' | 'export'
 
 /** How the user entered the workflow: the guided demo or the real passport flow. */
 export type WorkflowMode = 'demo' | 'workflow'

@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon'
 import { NextStep } from '../../components/NextStep'
 import { EvidenceList } from '../../features/traceability/EvidenceList'
 import { HandoffTable } from '../../features/traceability/HandoffTable'
+import { HeatTrail } from '../../features/traceability/HeatTrail'
 import { LinkRecordDialog } from '../../features/traceability/LinkRecordDialog'
 import { SourceInspector } from '../../features/traceability/SourceInspector'
 import { TraceChain } from '../../features/traceability/TraceChain'
@@ -113,6 +114,8 @@ export function TraceabilityPage() {
               </li>
             </ul>
           </details>
+
+          <HeatTrail trace={trace} resultsById={t.resultsById} onInspect={setInspect} />
 
           <TraceChain
             stages={trace.stages}

@@ -137,7 +137,7 @@ export function DashboardPage() {
         </section>
       )}
 
-      {passport && orders.length > 1 && <Orders orders={orders} current={passport.batchId} />}
+      {passport && <Orders orders={orders} current={passport.batchId} />}
 
       {passport && counts && (
         <>
@@ -203,7 +203,13 @@ function buyerOf(passport: CarbonPassport) {
   return passport.identity.find((c) => c.label.startsWith('Export buyer'))?.value
 }
 
-/** One row per batch found in the documents. Picking one switches every screen to that batch. */
+function orderLine(passport: CarbonPassport) {
+  const product = passport.identity.find((c) => c.label === 'Product (as dispatched)')?.value
+  const qty = passport.quantities.find((c) => c.label === 'Dispatched quantity')?.value
+  return [product, qty].filter(Boolean).join(' · ')
+}
+
+/** One row per batch found in the documents, never more. Picking one switches every screen to that batch. */
 function Orders({ orders, current }: { orders: readonly CarbonPassport[]; current: string }) {
   return (
     <section aria-labelledby="orders-title" className="rounded-2xl border border-line bg-surface p-2 sm:p-3">
@@ -228,9 +234,11 @@ function Orders({ orders, current }: { orders: readonly CarbonPassport[]; curren
                 <span className="min-w-0 flex-1">
                   <span className="block font-mono text-sm font-semibold text-ink-900">{order.batchId}</span>
                   <span className="block truncate text-sm text-ink-600">{buyerOf(order) ?? 'Buyer not found'}</span>
+                  {orderLine(order) && <span className="block truncate text-xs text-ink-600">{orderLine(order)}</span>}
                 </span>
-                <span className="shrink-0 text-sm text-ink-700 tabular-nums">
+                <span className="shrink-0 text-right text-sm text-ink-700 tabular-nums">
                   {c.found} of {c.found + c.missing + c.check}
+                  <span className="block text-xs text-ink-600">steps proven</span>
                 </span>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${TAG_TONE[left ? (c.problems ? 'problem' : 'todo') : 'done']}`}>
                   {left ? `${left} to do` : 'Ready'}

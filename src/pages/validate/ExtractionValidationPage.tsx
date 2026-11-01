@@ -5,6 +5,7 @@ import { WorkflowModeBanner } from '../../components/WorkflowModeBanner'
 import { getDocumentFile } from '../../features/documents/documentStore'
 import { ValidationPanel } from '../../features/evidence/ValidationPanel'
 import { DocumentResultCard } from '../../features/extraction/DocumentResultCard'
+import { EvidenceTable } from '../../features/extraction/EvidenceTable'
 import { needsProcessing, useExtraction } from '../../features/extraction/useExtraction'
 import { getPage, pageHref, WORKFLOW_STEP_COUNT } from '../../lib/routes'
 import type { StoredDocument } from '../../types/document'
@@ -179,6 +180,8 @@ export function ExtractionValidationPage({ mode }: ExtractionValidationPageProps
               </p>
             )}
           </section>
+
+          <EvidenceTable documents={x.documents} results={x.results} onInspect={showSource} />
 
           <ValidationPanel
             checks={x.checks}

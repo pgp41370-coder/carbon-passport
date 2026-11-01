@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 export type IconName =
   | 'dashboard'
   | 'fix'
+  | 'views'
+  | 'emissions'
   | 'upload'
   | 'validate'
   | 'traceability'
@@ -35,6 +37,15 @@ export type IconName =
   | 'external'
 
 const PATHS: Record<IconName, ReactNode> = {
+  emissions: <path d="M13 2 4.5 13.5H12L11 22l8.5-11.5H12L13 2Z" />,
+  views: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+      <path d="M18 14.2a6.5 6.5 0 0 1 3.5 5.8" />
+    </>
+  ),
   dashboard: (
     <>
       <rect x="3" y="3" width="7" height="9" rx="1.5" />

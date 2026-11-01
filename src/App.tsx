@@ -5,11 +5,13 @@ import { useHashLocation } from './lib/router'
 import { ComingNextPage } from './pages/ComingNextPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { FixPage } from './pages/fix/FixPage'
+import { PersonaViewsPage } from './pages/views/PersonaViewsPage'
 import { DocumentUploadPage } from './pages/upload/DocumentUploadPage'
 import { ExtractionValidationPage } from './pages/validate/ExtractionValidationPage'
 import { TraceabilityPage } from './pages/trace/TraceabilityPage'
 import { CarbonPassportPage } from './pages/passport/CarbonPassportPage'
 import { ExportPage } from './pages/export/ExportPage'
+import { EmissionsPage } from './pages/emissions/EmissionsPage'
 
 function App() {
   const { path, params } = useHashLocation()
@@ -41,6 +43,8 @@ function App() {
         <DashboardPage />
       ) : page.id === 'fix' ? (
         <FixPage />
+      ) : page.id === 'views' ? (
+        <PersonaViewsPage persona={params.get('as')} />
       ) : page.id === 'upload' ? (
         <DocumentUploadPage mode={mode} />
       ) : page.id === 'validate' ? (
@@ -49,6 +53,8 @@ function App() {
         <TraceabilityPage />
       ) : page.id === 'passport' ? (
         <CarbonPassportPage />
+      ) : page.id === 'emissions' ? (
+        <EmissionsPage />
       ) : page.id === 'export' ? (
         <ExportPage />
       ) : (

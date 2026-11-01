@@ -17,6 +17,13 @@ export const PAGES: readonly PageRoute[] = [
     nav: 'main',
   },
   {
+    id: 'views',
+    path: '/views',
+    label: 'Who sees what',
+    summary: 'The same batch as each person sees it: owner, staff, steel supplier, job-worker, consultant and export buyer.',
+    nav: 'main',
+  },
+  {
     id: 'upload',
     path: '/upload',
     label: 'Upload documents',
@@ -51,6 +58,13 @@ export const PAGES: readonly PageRoute[] = [
     summary:
       'Assemble a draft carbon passport for the batch, with each figure linked to its source evidence and review status.',
     step: { number: 4, label: 'Passport' },
+  },
+  {
+    id: 'emissions',
+    path: '/emissions',
+    label: 'Emissions preview',
+    nav: 'more',
+    summary: 'Electricity a bill states, times India’s official grid factor. Illustrative, never part of the passport.',
   },
   {
     id: 'export',
