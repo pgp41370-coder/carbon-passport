@@ -6,6 +6,7 @@ import type { ExtractionResult } from '../../types/extraction'
 import type { LinkId, TraceRecord } from '../../types/traceability'
 import { listDocuments } from '../documents/documentStore'
 import { listExtractions, purgeOrphanExtractions } from '../extraction/extractionStore'
+import { selectBatch, useSelectedBatch } from '../passport/selectedBatch'
 import { buildTrace, detectBatchIds } from './buildTrace'
 import { deleteTraceRecord, listTraceRecords, saveTraceRecord } from './traceStore'
 
@@ -31,7 +32,7 @@ export interface RecordInput {
 export function useTraceability() {
   const [snapshot, setSnapshot] = useState<Snapshot>({ documents: [], results: [], records: [] })
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' })
-  const [chosenBatch, setChosenBatch] = useState<string | null>(null)
+  const chosenBatch = useSelectedBatch()
 
   const load = useCallback(async () => {
     await purgeOrphanExtractions()
@@ -120,7 +121,7 @@ export function useTraceability() {
     resultsById,
     batchIds,
     batchId,
-    setBatchId: setChosenBatch,
+    setBatchId: selectBatch,
     trace,
     saveRecord,
     deleteRecord,

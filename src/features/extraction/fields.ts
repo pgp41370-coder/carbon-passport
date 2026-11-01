@@ -152,6 +152,17 @@ export const FIELD_SPECS: Record<FieldKey, FieldSpec> = {
     match: 'prefix',
     normalize: normalizeText,
   },
+  buyerName: {
+    // "Buyer:" or a "buyer" column. "Buyer PO:" on a supplier invoice is not matched: it needs the colon right after.
+    label: 'Buyer',
+    labels: [/\b(?:buyer|consignee)\s*(?:name)?\s*:/i],
+    value: /[A-Za-z][\w&.,'() -]{2,80}/,
+    match: 'full',
+    accept: hasWords,
+    normalize: normalizeText,
+    columns: [/^(?:buyer|consignee)(?:[\s_]*name)?$/i],
+    tableMode: 'distinct',
+  },
 }
 
 /** Fields worth looking for in each document type. Missing ones are shown as "Not detected". */
@@ -161,7 +172,7 @@ export const EXPECTED_FIELDS: Record<DocumentKind, FieldKey[]> = {
   production_log: ['batchId', 'outputQuantity', 'heatNumber'],
   electricity_bill: ['electricityConsumption', 'billingPeriod'],
   purchase_invoice: ['material', 'heatNumber', 'quantity', 'batchId', 'supplierName'],
-  dispatch_record: ['material', 'batchId', 'quantity'],
+  dispatch_record: ['material', 'batchId', 'quantity', 'buyerName'],
   job_worker_energy: ['electricityConsumption', 'billingPeriod', 'batchId'],
   unknown: ['batchId', 'heatNumber', 'quantity'],
 }

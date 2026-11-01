@@ -1,5 +1,6 @@
 import { Icon } from '../../components/Icon'
 import { countFindings, groupFindings } from '../../features/passport/findings'
+import { selectBatch } from '../../features/passport/selectedBatch'
 import { usePassport, type WorkspaceSummary } from '../../features/passport/usePassport'
 import { pageHref } from '../../lib/routes'
 import { toHref } from '../../lib/router'
@@ -66,7 +67,7 @@ function tasksFor(workspace: WorkspaceSummary, passport: CarbonPassport, counts:
 }
 
 export function DashboardPage() {
-  const { loadState, passport, workspace, reload } = usePassport()
+  const { loadState, passport, orders, workspace, reload } = usePassport()
   const quick = useQuickStart(reload)
   const unread = workspace.notProcessed + workspace.outdated
 
@@ -87,6 +88,7 @@ export function DashboardPage() {
         {passport && (
           <p className="text-sm text-ink-600">
             Batch <span className="font-mono font-semibold text-ink-900">{passport.batchId}</span>
+            {buyerOf(passport) && <> · for {buyerOf(passport)}</>}
           </p>
         )}
         <h1 id="page-title" tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight text-ink-900 outline-none sm:text-3xl">
@@ -135,6 +137,8 @@ export function DashboardPage() {
         </section>
       )}
 
+      {passport && orders.length > 1 && <Orders orders={orders} current={passport.batchId} />}
+
       {passport && counts && (
         <>
           <section aria-label="Readiness" className="flex items-center gap-5 rounded-2xl border border-line bg-surface p-6">
@@ -170,10 +174,21 @@ export function DashboardPage() {
             </ol>
           </section>
 
-          <a href={left ? pageHref('fix') : pageHref('passport')} className={primary}>
-            {left ? 'Fix next problem' : 'Open passport'}
-            <Icon name="arrow-right" className="size-5" />
-          </a>
+          {unread > 0 ? (
+            // Documents changed or the reading rules were updated: read again before fixing anything.
+            <div>
+              <button type="button" onClick={quick.readStored} disabled={quick.busy} className={primary}>
+                <Icon name="replace" className="size-5" />
+                Read {unread} document{unread === 1 ? '' : 's'} again
+              </button>
+              <QuickStartStatus state={quick.state} />
+            </div>
+          ) : (
+            <a href={left ? pageHref('fix') : pageHref('passport')} className={primary}>
+              {left ? 'Fix next problem' : 'Open passport'}
+              <Icon name="arrow-right" className="size-5" />
+            </a>
+          )}
         </>
       )}
 
@@ -181,6 +196,51 @@ export function DashboardPage() {
         <SampleDataDisclaimer compact illustrative={passport ? passport.illustrative : workspace.uploads === 0} hasDocuments />
       )}
     </div>
+  )
+}
+
+function buyerOf(passport: CarbonPassport) {
+  return passport.identity.find((c) => c.label.startsWith('Export buyer'))?.value
+}
+
+/** One row per batch found in the documents. Picking one switches every screen to that batch. */
+function Orders({ orders, current }: { orders: readonly CarbonPassport[]; current: string }) {
+  return (
+    <section aria-labelledby="orders-title" className="rounded-2xl border border-line bg-surface p-2 sm:p-3">
+      <h2 id="orders-title" className="px-3 pt-2 pb-1 text-sm font-semibold text-ink-700">
+        Your orders
+      </h2>
+      <ul>
+        {orders.map((order) => {
+          const c = countFindings(groupFindings(order))
+          const left = c.problems + c.missing + c.check
+          const selected = order.batchId === current
+          return (
+            <li key={order.batchId}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => selectBatch(order.batchId)}
+                className={`flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-forest-500 ${
+                  selected ? 'bg-forest-50 ring-1 ring-forest-200' : 'hover:bg-canvas'
+                }`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block font-mono text-sm font-semibold text-ink-900">{order.batchId}</span>
+                  <span className="block truncate text-sm text-ink-600">{buyerOf(order) ?? 'Buyer not found'}</span>
+                </span>
+                <span className="shrink-0 text-sm text-ink-700 tabular-nums">
+                  {c.found} of {c.found + c.missing + c.check}
+                </span>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${TAG_TONE[left ? (c.problems ? 'problem' : 'todo') : 'done']}`}>
+                  {left ? `${left} to do` : 'Ready'}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
 

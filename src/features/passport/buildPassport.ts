@@ -105,6 +105,7 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
   const identity: Claim[] = [
     { ...batchClaim, value: batchClaim.value ?? batchId, note: [`Referenced in ${batchClaim.sources.length} source location${batchClaim.sources.length === 1 ? '' : 's'}.`, batchClaim.note].filter(Boolean).join(' ') },
     claimFrom('Product (as dispatched)', dispatches, 'material', undefined, 'No product description was read from a dispatch record.'),
+    claimFrom('Export buyer (dispatch record)', dispatches, 'buyerName', undefined, 'No buyer was read from a dispatch record.'),
     claimFrom('Input material', invoices, 'material', undefined, 'No material description was read from a purchase invoice.'),
     claimFrom('Steel heat number (mill certificate)', certs, 'heatNumber', undefined, 'No mill test certificate heat number was read.'),
     claimFrom('Steel supplier (certificate heading)', certs, 'supplierName', undefined, 'No supplier name was read.'),

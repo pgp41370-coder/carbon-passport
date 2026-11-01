@@ -1,7 +1,7 @@
 import type { DocumentOrigin } from './document'
 
 /** Bump when parsing or field rules change so stored results can be flagged as outdated. */
-export const EXTRACTOR_VERSION = 1
+export const EXTRACTOR_VERSION = 2
 
 export type ExtractionMethod = 'pdf-text' | 'pdf-ocr' | 'pdf-mixed' | 'image-ocr' | 'csv' | 'spreadsheet'
 
@@ -81,6 +81,7 @@ export type FieldKey =
   | 'outputQuantity'
   | 'electricityConsumption'
   | 'billingPeriod'
+  | 'buyerName'
 
 export type FieldStatus = 'detected' | 'needs_review' | 'not_detected'
 

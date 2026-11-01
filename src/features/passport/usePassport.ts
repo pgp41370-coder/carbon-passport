@@ -11,6 +11,7 @@ import { detectBatchIds } from '../traceability/buildTrace'
 import { listTraceRecords } from '../traceability/traceStore'
 import { DEFAULT_BATCH_ID } from '../traceability/useTraceability'
 import { buildPassport } from './buildPassport'
+import { useSelectedBatch } from './selectedBatch'
 
 export interface WorkspaceSummary {
   total: number
@@ -75,11 +76,19 @@ export function usePassport() {
     () => (snapshot ? detectBatchIds(snapshot.results.filter((r) => r.status !== 'failed')) : []),
     [snapshot],
   )
-  const batchId = batchIds.includes(DEFAULT_BATCH_ID) ? DEFAULT_BATCH_ID : (batchIds[0] ?? null)
+  const chosen = useSelectedBatch()
+  const batchId =
+    chosen && batchIds.includes(chosen) ? chosen : batchIds.includes(DEFAULT_BATCH_ID) ? DEFAULT_BATCH_ID : (batchIds[0] ?? null)
 
   const passport = useMemo(
     () => (snapshot && batchId ? buildPassport({ ...snapshot, batchId, now: snapshot.loadedAt }) : null),
     [snapshot, batchId],
+  )
+
+  /** One draft passport per batch found, for the orders list. Built from the same data as `passport`. */
+  const orders = useMemo(
+    () => (snapshot ? batchIds.map((id) => (id === batchId && passport ? passport : buildPassport({ ...snapshot, batchId: id, now: snapshot.loadedAt }))) : []),
+    [snapshot, batchIds, batchId, passport],
   )
 
   const resultsById = useMemo(
@@ -103,5 +112,5 @@ export function usePassport() {
     }
   }, [snapshot])
 
-  return { loadState, passport, resultsById, workspace, documentCount: workspace.total, reload }
+  return { loadState, passport, orders, resultsById, workspace, documentCount: workspace.total, reload }
 }
