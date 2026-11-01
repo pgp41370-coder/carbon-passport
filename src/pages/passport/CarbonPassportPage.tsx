@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Card } from '../../components/Card'
 import { Icon } from '../../components/Icon'
-import { NextStep } from '../../components/NextStep'
 import { ClaimList } from '../../features/passport/ClaimList'
 import { downloadText, exportFileName, passportToHtml, passportToJson } from '../../features/passport/exportPassport'
 import { CLAIM_LABELS, PASSPORT_DISCLAIMER } from '../../features/passport/passportLabels'
@@ -10,11 +9,24 @@ import { usePassport } from '../../features/passport/usePassport'
 import { SourceInspector } from '../../features/traceability/SourceInspector'
 import { TraceChain } from '../../features/traceability/TraceChain'
 import { IllustrativeTag, TraceStatusChip } from '../../features/traceability/TraceStatusChip'
-import { getPage, pageHref, WORKFLOW_STEP_COUNT } from '../../lib/routes'
+import { pageHref } from '../../lib/routes'
 import type { SourceRef } from '../../types/extraction'
-import type { ClaimKind } from '../../types/passport'
+import type { CarbonPassport, Claim, ClaimKind } from '../../types/passport'
 
-const page = getPage('passport')
+/** The handful of facts a buyer asks about first, in plain words. Everything else is under "full details". */
+const KEY_FACTS: { label: string; claim: string }[] = [
+  { label: 'Product', claim: 'Product (as dispatched)' },
+  { label: 'Steel heat number', claim: 'Steel heat number (mill certificate)' },
+  { label: 'Steel bought', claim: 'Steel purchased' },
+  { label: 'Finished output', claim: 'Finished-batch output (after heat treatment)' },
+  { label: 'Factory electricity', claim: 'Plant electricity' },
+  { label: 'Job-worker furnace energy', claim: 'Job-worker heat-treatment energy' },
+]
+
+function keyFacts(passport: CarbonPassport): { label: string; claim?: Claim }[] {
+  const all = [...passport.identity, ...passport.quantities, ...passport.energy]
+  return KEY_FACTS.map(({ label, claim }) => ({ label, claim: all.find((c) => c.label === claim) }))
+}
 
 function Section({ number, title, id, children, collapsed }: { number: number; title: string; id: string; children: ReactNode; collapsed?: boolean }) {
   if (collapsed)
@@ -57,17 +69,11 @@ export function CarbonPassportPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold tracking-wide text-forest-600 uppercase">
-          Step {page.step?.number} of {WORKFLOW_STEP_COUNT} · {page.step?.label}
-        </p>
-        <h1 id="page-title" tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight text-forest-950 outline-none sm:text-3xl">
-          Carbon Passport <span className="text-status-missing">(draft)</span>
+      <header className="mx-auto max-w-2xl">
+        <h1 id="page-title" tabIndex={-1} className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight text-ink-900 outline-none sm:text-3xl">
+          Carbon passport
+          <span className="rounded-full bg-status-review/[0.1] px-2.5 py-1 text-sm font-semibold text-status-review-ink ring-1 ring-status-review/30">Draft</span>
         </h1>
-        <p className="mt-2 max-w-2xl text-ink-600">
-          Every statement below links to its source document, or says plainly that it is missing. Nothing is certified or
-          verified, and no carbon footprint is calculated.
-        </p>
       </header>
 
       {loadState.status === 'loading' && <p className="text-sm text-ink-500">Loading stored evidence…</p>}
@@ -91,57 +97,74 @@ export function CarbonPassportPage() {
 
       {passport && (
         <>
-          {/* Passport cover: identity, honest status and exports at a glance. */}
-          <section aria-label="Passport summary" className="relative overflow-hidden rounded-3xl bg-forest-950 p-6 text-white sm:p-8">
-            <div aria-hidden="true" className="pointer-events-none absolute -top-20 -right-16 size-72 rounded-full bg-forest-600/40 blur-3xl" />
-            <div className="relative space-y-4">
-              <PassportStatusBadges statuses={passport.statuses} illustrative={passport.illustrative} />
+          <section aria-label="Passport summary" className="mx-auto max-w-2xl space-y-5 rounded-2xl border border-line bg-surface p-5 sm:p-7">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div>
-                <p className="text-sm text-forest-200">Batch</p>
-                <p className="font-mono text-2xl font-semibold tracking-tight">{passport.batchId}</p>
-                <p className="mt-1 text-sm text-forest-200">
-                  {passport.identity.find((c) => c.label.startsWith('Product'))?.value ?? 'Product not established'} · generated{' '}
-                  {new Date(passport.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                </p>
+                <p className="text-sm text-ink-600">Batch</p>
+                <p className="font-mono text-2xl font-semibold tracking-tight text-ink-900">{passport.batchId}</p>
               </div>
-              <dl className="grid gap-3 sm:grid-cols-3">
-                {[
-                  ['Carbon footprint', passport.calculation.available ? 'See section 5' : 'Not calculated'],
-                  ['Finished-batch output', passport.quantities.find((q) => q.label.startsWith('Finished'))?.value ?? 'Not established'],
-                  ['Open issues and gaps', `${passport.issues.length} issues · ${passport.gaps.length} gaps`],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
-                    <dt className="text-xs text-forest-200">{label}</dt>
-                    <dd className="mt-0.5 font-semibold">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="rounded-xl bg-status-missing/20 p-3 text-sm font-medium text-white ring-1 ring-status-missing/40">
-                Draft, not certified. {PASSPORT_DISCLAIMER}
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => exportAs('html')}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-moss-400 px-4 py-2.5 text-sm font-semibold text-forest-950 hover:bg-moss-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss-400"
-                >
-                  <Icon name="download" className="size-4" />
-                  Download draft (HTML)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => exportAs('json')}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/30 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  <Icon name="download" className="size-4" />
-                  Download data (JSON)
-                </button>
-              </div>
-              <p className="text-xs text-forest-200" role="status">
-                {exported ?? 'Exports are generated in this browser and contain the same statuses, sources and gaps as this page. Open the HTML file and print it to save a PDF.'}
+              <p className="text-sm text-ink-600">
+                Carbon footprint: <span className="font-semibold text-ink-900">{passport.calculation.available ? 'see details' : 'not calculated'}</span>
               </p>
             </div>
+
+            <dl className="divide-y divide-line rounded-xl border border-line">
+              {keyFacts(passport).map(({ label, claim }) => (
+                <div key={label} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+                  <dt className="w-full shrink-0 text-sm text-ink-600 sm:w-44">{label}</dt>
+                  <dd className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                    <span className={`text-base font-semibold break-words ${claim?.value ? 'text-ink-900' : 'text-status-missing'}`}>{claim?.value ?? 'Missing'}</span>
+                    {claim?.sources[0] && (
+                      <button
+                        type="button"
+                        onClick={() => setInspect(claim.sources[0])}
+                        className="ml-auto inline-flex min-h-9 cursor-pointer items-center gap-1 text-sm font-semibold text-forest-700 hover:text-forest-900 focus-visible:outline-2 focus-visible:outline-forest-500"
+                      >
+                        <Icon name="file-text" className="size-4" />
+                        Source<span className="sr-only"> for {label}</span>
+                      </button>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => exportAs('html')}
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-forest-700 px-5 text-base font-semibold text-white transition-colors duration-150 hover:bg-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500"
+              >
+                <Icon name="download" className="size-5" />
+                Download draft
+              </button>
+              <button
+                type="button"
+                onClick={() => exportAs('json')}
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-forest-800 transition-colors duration-150 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500"
+              >
+                Data file (JSON)
+              </button>
+            </div>
+            <p className="text-sm text-ink-600" role="status">
+              {exported ?? 'Open the downloaded file and print it to save a PDF.'}
+            </p>
+            <p className="flex items-start gap-2 rounded-xl bg-status-review/[0.07] px-3 py-2 text-sm text-ink-700 ring-1 ring-status-review/30">
+              <Icon name="info" className="mt-0.5 size-4 shrink-0 text-status-review-ink" />
+              <span>
+                {passport.illustrative ? 'Sample documents (fictional). ' : ''}Draft for a person to review: not certified or verified.
+              </span>
+            </p>
           </section>
+
+          <details className="group mx-auto max-w-2xl">
+            <summary className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl text-sm font-semibold text-forest-700 hover:bg-forest-50">
+              <span className="group-open:hidden">Show full details for a reviewer</span>
+              <span className="hidden group-open:inline">Hide full details</span>
+            </summary>
+            <div className="mt-4 space-y-6">
+          <PassportStatusBadges statuses={passport.statuses} illustrative={passport.illustrative} />
+          <p className="text-sm text-ink-700">Draft, not certified. {PASSPORT_DISCLAIMER}</p>
 
           <Card title="How to read this passport">
             <ul className="grid gap-2 text-xs text-ink-600 sm:grid-cols-3">
@@ -297,11 +320,8 @@ export function CarbonPassportPage() {
             ))}
           </Section>
 
-          <NextStep
-            to="export"
-            title="Next: Download"
-            body="Save this draft as a printable page or a data file to share with a reviewer."
-          />
+            </div>
+          </details>
         </>
       )}
 
