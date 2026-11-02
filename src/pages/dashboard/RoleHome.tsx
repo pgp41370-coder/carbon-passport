@@ -36,8 +36,8 @@ const PARTY_MATCH: Record<'supplier' | 'job_worker', RegExp> = { supplier: /stee
 
 // The document types each outside party issues.
 const PARTY_PAPERS: Record<'supplier' | 'job_worker', string[]> = {
-  supplier: ['Mill test certificate', 'Purchase invoice'],
-  job_worker: ['Job-work challan', 'Job-worker energy record'],
+  supplier: ['Mill test certificate', 'Stockist lot transfer', 'Purchase invoice'],
+  job_worker: ['Job-work challan', 'Job-worker energy record', 'Return challan'],
 }
 
 interface Item {

@@ -99,6 +99,7 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
   const challans = ofKind('job_work_challan')
   const energyDocs = ofKind('job_worker_energy')
   const dispatches = ofKind('dispatch_record')
+  const returns = ofKind('return_challan')
 
   // ── 1. Identity ────────────────────────────────────────────────────────────
   const batchClaim = claimFrom('Batch ID', inBatch, 'batchId')
@@ -123,12 +124,14 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
       'No output was read from a production log.',
     ),
     claimFrom('Sent for heat treatment', challans, 'quantity', 'Quantity on the job-work challan.', 'No quantity was read from a job-work challan.'),
-    {
-      label: 'Finished-batch output (after heat treatment)',
-      kind: 'missing',
-      sources: [],
-      note: `${NOT_ESTABLISHED} No document records the quantity after heat treatment.`,
-    },
+    returns.length
+      ? claimFrom('Finished-batch output (after heat treatment)', returns, 'quantity', 'Quantity returned by the job-worker after heat treatment, on the return challan.', 'No quantity was read from the return challan.')
+      : {
+          label: 'Finished-batch output (after heat treatment)',
+          kind: 'missing',
+          sources: [],
+          note: `${NOT_ESTABLISHED} No document records the quantity after heat treatment.`,
+        },
     claimFrom(
       'Dispatched quantity',
       dispatches,
@@ -186,8 +189,8 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
     {
       id: 'finished-output',
       label: 'Confirmed finished-batch output',
-      met: false,
-      detail: NOT_ESTABLISHED,
+      met: quantities.find((c) => c.label === 'Finished-batch output (after heat treatment)')?.kind === 'extracted',
+      detail: returns.length ? 'From the return challan.' : NOT_ESTABLISHED,
     },
     {
       id: 'job-worker-energy',
@@ -310,7 +313,7 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
     'This is a prototype draft. It is not certified, verified, compliant or approved by any buyer or third party.',
     'Supported by source means a document contains the value; it does not mean the value has been independently checked.',
     'OCR and rule-based extraction can misread values. Inspect each source before relying on it.',
-    'Stockist documents, return challans and finished-output records are not recognised automatically yet.',
+    'Stockist lot transfers and return challans are read; other stockist papers and final inspection reports are not recognised automatically yet.',
     'Review notes record a person’s judgement and are not verification.',
   ]
 

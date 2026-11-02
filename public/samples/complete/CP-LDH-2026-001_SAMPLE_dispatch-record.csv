@@ -1,0 +1,5 @@
+# SYNTHETIC SAMPLE DOCUMENT - FICTIONAL DATA FOR DEMONSTRATION - NOT A REAL BUSINESS RECORD
+# Finished-goods dispatch record - Sample Fasteners Pvt. Ltd. (fictional) - batch CP-LDH-2026-001
+dispatch_date,dispatch_no,batch_id,product,buyer,packages,net_weight_kg,vehicle_no
+2026-02-02,SAMPLE-DSP-0211,CP-LDH-2026-001,Hex bolts M12x60 class 8.8,Sample Export Buyer GmbH (fictional),320,8000,PB-10-SAMPLE
+2026-02-04,SAMPLE-DSP-0214,CP-LDH-2026-001,Hex bolts M12x60 class 8.8,Sample Export Buyer GmbH (fictional),160,4000,PB-10-SAMPLE

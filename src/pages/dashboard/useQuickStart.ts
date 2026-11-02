@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { toErrorMessage } from '../../lib/errors'
+import type { SamplePack } from '../../data/samplePack'
 import { loadSamplePackIntoStorage } from '../../features/documents/samplePackLoader'
 import { documentsToRead, readDocuments, type ReadProgress } from '../../features/extraction/processDocuments'
 
@@ -14,11 +15,11 @@ export function useQuickStart(onDone: () => void) {
   const [state, setState] = useState<QuickStartState>({ status: 'idle' })
 
   const run = useCallback(
-    async (withSamples: boolean) => {
+    async (pack: SamplePack | null) => {
       try {
-        if (withSamples) {
+        if (pack) {
           setState({ status: 'loading-samples' })
-          await loadSamplePackIntoStorage()
+          await loadSamplePackIntoStorage(pack)
         }
         const docs = await documentsToRead()
         setState({ status: 'reading', progress: null })
@@ -41,7 +42,8 @@ export function useQuickStart(onDone: () => void) {
   return {
     state,
     busy: state.status === 'loading-samples' || state.status === 'reading',
-    trySample: () => void run(true),
-    readStored: () => void run(false),
+    trySample: () => void run('problems'),
+    tryComplete: () => void run('complete'),
+    readStored: () => void run(null),
   }
 }

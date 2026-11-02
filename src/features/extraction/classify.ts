@@ -8,10 +8,12 @@ export const KIND_LABELS: Record<DocumentKind, string> = {
   purchase_invoice: 'Purchase invoice',
   dispatch_record: 'Dispatch record',
   job_worker_energy: 'Job-worker energy record',
+  stockist_record: 'Stockist lot transfer',
+  return_challan: 'Return challan',
   unknown: 'Unrecognised document',
 }
 
-const RULES: { kind: Exclude<DocumentKind, 'unknown' | 'job_worker_energy'>; keywords: string[] }[] = [
+const RULES: { kind: Exclude<DocumentKind, 'unknown' | 'job_worker_energy' | 'return_challan'>; keywords: string[] }[] = [
   {
     kind: 'mill_test_certificate',
     keywords: ['mill test certificate', 'test certificate', 'inspection certificate', 'chemical composition', 'heat no', 'tensile', 'en 10204'],
@@ -33,12 +35,18 @@ const RULES: { kind: Exclude<DocumentKind, 'unknown' | 'job_worker_energy'>; key
     keywords: ['production log', 'operation', 'machine', 'scrap', 'run hours', 'output'],
   },
   {
+    kind: 'stockist_record',
+    keywords: ['lot transfer', 'stockist', 'transfer note', 'mill lot', 'received from mill'],
+  },
+  {
     kind: 'dispatch_record',
     keywords: ['dispatch', 'net_weight', 'net weight', 'vehicle', 'consignee', 'packages'],
   },
 ]
 
 const JOB_WORKER = /job[\s-]?work(er)?|heat[\s-]?treat/
+// Not just "return challan": the outward challan has a blank "Return challan ref." line.
+const RETURN = /goods returned after|return challan no/
 const ENERGY = /kwh|units consumed|fuel|lpg|diesel|furnace (log|energy)|energy (log|record)/
 
 /**
@@ -55,6 +63,10 @@ export function classifyDocument(text: string): DetectedType {
   if (jobWorker && energy && !haystack.includes('challan')) {
     return { kind: 'job_worker_energy', matchedKeywords: [jobWorker[0], energy[0]] }
   }
+
+  // A challan for goods coming back from the job-worker would otherwise read as the outward challan.
+  const returned = haystack.match(RETURN)
+  if (returned && jobWorker) return { kind: 'return_challan', matchedKeywords: [returned[0], jobWorker[0]] }
 
   let best: DetectedType = { kind: 'unknown', matchedKeywords: [] }
   for (const rule of RULES) {

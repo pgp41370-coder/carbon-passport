@@ -92,10 +92,10 @@ const GUIDES: Record<string, (ctx: FixContext, finding: Finding) => FixGuide> = 
     mustShow: ['Heat number of the steel', 'Quantity and date'],
     steps: [
       'Ask the seller named on your purchase invoice for the document.',
-      'The app cannot read this document type yet. In Supply chain, open the “Steel mill → Stockist / trader” hand-off and add the document reference with a note.',
-      'It then shows as “Needs check” until someone reviews it.',
+      'Upload the lot transfer here. It is read in this browser and its heat number is matched to the mill certificate.',
+      'If the steel came straight from the mill, add a note on the “Steel mill → Stockist / trader” hand-off in Supply chain instead.',
     ],
-    action: { kind: 'supply-chain', handoff: 'Steel mill → Stockist / trader' },
+    action: { kind: 'upload' },
     message: {
       en: `Hello, for the steel supplied for our batch ${ctx.batchId}, please confirm whether it came directly from the mill or through a trader, and share the lot transfer or trader invoice showing the heat number. Thank you.`,
       hi: `नमस्ते, हमारे बैच ${ctx.batchId} के लिए आपने जो स्टील दिया, कृपया बताएँ कि वह सीधे मिल से आया या किसी ट्रेडर के ज़रिए, और हीट नंबर वाला लॉट ट्रांसफ़र या ट्रेडर इनवॉइस भेज दें। धन्यवाद।`,
@@ -108,9 +108,9 @@ const GUIDES: Record<string, (ctx: FixContext, finding: Finding) => FixGuide> = 
     mustShow: ['Challan number it returns against', 'Quantity returned', 'Date'],
     steps: [
       'Find the return challan in your stores records, or ask the job-worker for a copy.',
-      'The app cannot read return challans yet. In Supply chain, open the “Heat-treatment job-worker → Finished batch” hand-off and add its reference with a note.',
+      'Upload it here. Its batch and heat number are matched to this batch, and the quantity returned becomes the finished output.',
     ],
-    action: { kind: 'supply-chain', handoff: 'Heat-treatment job-worker → Finished batch' },
+    action: { kind: 'upload' },
     message: {
       en: `Hello, please send a copy of the return challan for our batch ${ctx.batchId}${order(ctx)} with the quantity returned and the date. Thank you.`,
       hi: `नमस्ते, कृपया हमारे बैच ${ctx.batchId}${orderHi(ctx)} का रिटर्न चालान भेज दें, जिसमें लौटाई गई मात्रा और तारीख हो। धन्यवाद।`,
@@ -119,14 +119,14 @@ const GUIDES: Record<string, (ctx: FixContext, finding: Finding) => FixGuide> = 
   'finished-output': () => ({
     summary: 'Record how much finished product came out after heat treatment.',
     who: 'Your own stores or quality team',
-    document: 'Final inspection or weighing report',
-    mustShow: ['Finished weight or piece count', 'Batch number', 'Date'],
+    document: 'Return challan with the quantity returned',
+    mustShow: ['Quantity returned after heat treatment', 'Batch number', 'Date'],
     steps: [
-      'Weigh or count the finished batch, or take it from the final inspection report.',
-      'The app cannot read this report type yet. In Supply chain, add it on the “Heat-treatment job-worker → Finished batch” hand-off with a note.',
+      'Upload the job-worker’s return challan. The quantity it returns is read as the finished output.',
+      'A final inspection or weighing report is not read automatically yet; add it on the “Heat-treatment job-worker → Finished batch” hand-off in Supply chain.',
       'The dispatch record is not used instead: dispatched is not the same as produced.',
     ],
-    action: { kind: 'supply-chain', handoff: 'Heat-treatment job-worker → Finished batch' },
+    action: { kind: 'upload' },
   }),
   'mill-identity': () => ({
     summary: 'Confirm the name of the mill that issued the certificate.',

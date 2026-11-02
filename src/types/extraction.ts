@@ -1,7 +1,7 @@
 import type { DocumentOrigin } from './document'
 
 /** Bump when parsing or field rules change so stored results can be flagged as outdated. */
-export const EXTRACTOR_VERSION = 2
+export const EXTRACTOR_VERSION = 3
 
 export type ExtractionMethod = 'pdf-text' | 'pdf-ocr' | 'pdf-mixed' | 'image-ocr' | 'csv' | 'spreadsheet'
 
@@ -61,6 +61,8 @@ export type DocumentKind =
   | 'purchase_invoice'
   | 'dispatch_record'
   | 'job_worker_energy'
+  | 'stockist_record'
+  | 'return_challan'
   | 'unknown'
 
 export interface DetectedType {

@@ -103,12 +103,16 @@ export function buildTrace(
   const challans = ofKind('job_work_challan')
   const energy = ofKind('job_worker_energy')
   const dispatches = ofKind('dispatch_record')
+  const stockists = ofKind('stockist_record')
+  const returns = ofKind('return_challan')
 
   const heats = (results: Result[]) => distinct(results.map((r) => field(r, 'heatNumber')?.normalized))
   const certHeats = heats(certs)
   const invoiceHeats = heats(invoices)
   const logHeats = heats(logs)
   const challanHeats = heats(challans)
+  const stockistHeats = heats(stockists)
+  const returnHeats = heats(returns)
   const upstreamHeats = distinct([...certHeats, ...logHeats])
 
   const noBatchRef = (results: Result[]) => results.filter((r) => !field(r, 'batchId'))
@@ -136,13 +140,15 @@ export function buildTrace(
     {
       id: 'mill-identity',
       label: 'Mill or supplier identity',
-      status: certs.length ? 'needs_review' : 'missing',
+      status: certs.length ? (certs.every((r) => field(r, 'supplierName')?.status === 'detected') ? 'supported' : 'needs_review') : 'missing',
       detail: certs.length
-        ? 'Read from the certificate heading by position, not from a label. Confirm the issuing mill.'
+        ? certs.every((r) => field(r, 'supplierName')?.status === 'detected')
+          ? 'Named next to the “Manufacturer” label on the certificate.'
+          : 'Read from the certificate heading by position, not from a label. Confirm the issuing mill.'
         : 'Unknown without a mill test certificate.',
       evidence: certs.flatMap((r) => {
         const f = field(r, 'supplierName')
-        return f ? [fieldEvidence(r, f, 'Certificate heading')] : []
+        return f ? [fieldEvidence(r, f, f.status === 'detected' ? 'Manufacturer' : 'Certificate heading')] : []
       }),
     },
   ]
@@ -152,13 +158,25 @@ export function buildTrace(
     {
       id: 'stockist-record',
       label: 'Stockist or trader record for this lot',
-      status: 'missing',
-      detail:
-        'No stockist or trader document (lot transfer, dispatch note or trader invoice) has been uploaded, so it is not known whether the steel came straight from the mill or through a trader.',
-      evidence: invoices.flatMap((r) => {
-        const f = field(r, 'supplierName')
-        return f ? [fieldEvidence(r, f, 'Seller named on purchase invoice (role not stated)')] : []
-      }),
+      status: stockists.length ? (stockistHeats.length && stockistHeats.every((h) => certHeats.includes(h)) ? 'supported' : 'needs_review') : 'missing',
+      detail: stockists.length
+        ? stockistHeats.length
+          ? stockistHeats.every((h) => certHeats.includes(h))
+            ? `Lot transfer for heat no. ${stockistHeats.join(', ')}, the same heat as the mill certificate.`
+            : `Lot transfer gives heat no. ${stockistHeats.join(', ')}, which does not match the mill certificate (${certHeats.join(', ') || 'none read'}).`
+          : 'A lot transfer is present, but no heat number could be read from it.'
+        : 'No stockist or trader document (lot transfer, dispatch note or trader invoice) has been uploaded, so it is not known whether the steel came straight from the mill or through a trader.',
+      evidence: stockists.length
+        ? stockists.flatMap((r) =>
+            (['heatNumber', 'supplierName', 'quantity'] as const).flatMap((key) => {
+              const f = field(r, key)
+              return f ? [fieldEvidence(r, f, { heatNumber: 'Heat no.', supplierName: 'Stockist', quantity: 'Quantity transferred' }[key])] : []
+            }),
+          )
+        : invoices.flatMap((r) => {
+            const f = field(r, 'supplierName')
+            return f ? [fieldEvidence(r, f, 'Seller named on purchase invoice (role not stated)')] : []
+          }),
     },
   ]
 
@@ -251,10 +269,16 @@ export function buildTrace(
     {
       id: 'return-record',
       label: 'Return of goods after heat treatment',
-      status: 'missing',
-      detail:
-        'No document shows the goods coming back from the job-worker. Return challans are not recognised automatically yet; record one as a proposed link if you have it.',
-      evidence: [],
+      status: returns.length ? (returns.every((r) => field(r, 'batchId')?.normalized === batchId) && returnHeats.every((h) => certHeats.includes(h)) ? 'supported' : 'needs_review') : 'missing',
+      detail: returns.length
+        ? `Return challan for batch ${distinct(returns.map((r) => field(r, 'batchId')?.value)).join(', ') || '(not read)'}${returnHeats.length ? `, heat no. ${returnHeats.join(', ')}` : ''}.${batchNote(returns)}`
+        : 'No document shows the goods coming back from the job-worker.',
+      evidence: returns.flatMap((r) =>
+        (['challanNumber', 'batchId', 'heatNumber'] as const).flatMap((key) => {
+          const f = field(r, key)
+          return f ? [fieldEvidence(r, f, { challanNumber: 'Return challan no.', batchId: 'Batch ref.', heatNumber: 'Heat no.' }[key])] : []
+        }),
+      ),
     },
   ]
 
@@ -263,11 +287,14 @@ export function buildTrace(
     {
       id: 'finished-output',
       label: 'Finished output after heat treatment',
-      status: 'missing',
-      detail: `No document records the finished quantity after heat treatment.${
-        outputFields.some(({ f }) => f) ? ' The production log figure is from before heat treatment.' : ''
-      }`,
-      evidence: [],
+      status: fieldStatus(returns, 'quantity'),
+      detail: returns.some((r) => field(r, 'quantity'))
+        ? `${distinct(returns.map((r) => { const f = field(r, 'quantity'); return f && withUnit(f) })).join(', ')} came back after heat treatment, on the return challan.`
+        : `No document records the finished quantity after heat treatment.${outputFields.some(({ f }) => f) ? ' The production log figure is from before heat treatment.' : ''}`,
+      evidence: returns.flatMap((r) => {
+        const f = field(r, 'quantity')
+        return f ? [fieldEvidence(r, f, 'Returned after heat treatment')] : []
+      }),
     },
     {
       id: 'dispatch-record',
@@ -308,7 +335,15 @@ export function buildTrace(
   const firstOutput = outputFields.find(({ f }) => f)?.f
   const stages: TraceStage[] = [
     stage('mill', 1, 'Steel mill', 'Melts and rolls the steel; issues the mill test certificate', certHeats.length ? `Heat no. ${certHeats.join(', ')}` : 'No certificate', millRequirements, certs),
-    stage('stockist', 2, 'Stockist / trader', 'Holds or resells mill stock, if used', 'Not confirmed', stockistRequirements, []),
+    stage(
+      'stockist',
+      2,
+      'Stockist / trader',
+      'Holds or resells mill stock, if used',
+      stockists.length ? (distinct(stockists.map((r) => field(r, 'supplierName')?.value))[0] ?? 'Lot transfer on file') : 'Not confirmed',
+      stockistRequirements,
+      stockists,
+    ),
     stage(
       'factory',
       3,
@@ -325,9 +360,17 @@ export function buildTrace(
       'Hardens and tempers the bolts (outsourced)',
       distinct(challans.map((r) => field(r, 'jobWorkerName')?.value))[0] ?? (challans.length ? 'Name not read' : 'No challan'),
       jobWorkerRequirements,
-      [...challans, ...energy],
+      [...challans, ...energy, ...returns],
     ),
-    stage('finished_batch', 5, 'Finished batch', `Batch ${batchId} ready for the buyer`, 'Finished output not recorded', finishedRequirements, dispatches),
+    stage(
+      'finished_batch',
+      5,
+      'Finished batch',
+      `Batch ${batchId} ready for the buyer`,
+      returns.some((r) => field(r, 'quantity')) ? `${distinct(returns.map((r) => { const f = field(r, 'quantity'); return f && withUnit(f) }))[0]} after heat treatment` : 'Finished output not recorded',
+      finishedRequirements,
+      dispatches,
+    ),
   ]
 
   // ── Hand-offs ──────────────────────────────────────────────────────────────
@@ -365,6 +408,10 @@ export function buildTrace(
     })
 
   const invoiceMatchesCert = invoiceHeats.length > 0 && certHeats.length > 0 && invoiceHeats.every((h) => certHeats.includes(h))
+  // The seller's role is only known when the stockist's own lot transfer carries the same heat.
+  const invoiceMatchesStockist = invoiceMatchesCert && stockistHeats.length > 0 && invoiceHeats.every((h) => stockistHeats.includes(h))
+  const returnBatches = distinct(returns.map((r) => field(r, 'batchId')?.normalized))
+  const returnAgrees = returns.length > 0 && returnBatches.includes(batchId) && returnHeats.length > 0 && returnHeats.every((h) => certHeats.includes(h))
   const challanMismatch = challanHeats.filter((h) => upstreamHeats.length > 0 && !upstreamHeats.includes(h))
   const challanBatches = distinct(challans.map((r) => field(r, 'batchId')?.normalized))
   const challanQty = distinct(challans.map((r) => field(r, 'quantity')?.normalized))
@@ -377,30 +424,40 @@ export function buildTrace(
       'mill',
       'stockist',
       'Steel mill → Stockist / trader',
-      'missing',
-      'No document links the mill lot to a stockist or trader.',
-      heatEvidence(certs, 'Mill certificate heat no.'),
-      'Check with the steel seller whether the material came directly from the mill or through a stockist; upload the stockist’s lot transfer or invoice if there is one.',
-      certs,
+      stockists.length ? (stockistHeats.length && stockistHeats.every((h) => certHeats.includes(h)) ? 'supported' : 'needs_review') : 'missing',
+      stockists.length
+        ? stockistHeats.length && stockistHeats.every((h) => certHeats.includes(h))
+          ? `The stockist’s lot transfer carries heat no. ${stockistHeats.join(', ')}, as on the mill certificate.`
+          : `The lot transfer gives heat no. ${stockistHeats.join(', ') || '(not read)'}; the certificate gives ${certHeats.join(', ') || '(not read)'}.`
+        : 'No document links the mill lot to a stockist or trader.',
+      [...heatEvidence(certs, 'Mill certificate heat no.'), ...heatEvidence(stockists, 'Lot transfer heat no.')],
+      stockists.length
+        ? 'Keep the lot transfer with the batch file.'
+        : 'Check with the steel seller whether the material came directly from the mill or through a stockist; upload the stockist’s lot transfer or invoice if there is one.',
+      [...certs, ...stockists],
     ),
     link(
       'stockist-factory',
       'stockist',
       'factory',
       'Stockist / trader → MSME factory',
-      invoices.length === 0 ? 'missing' : 'needs_review',
+      invoices.length === 0 ? 'missing' : invoiceMatchesStockist ? 'supported' : 'needs_review',
       invoices.length === 0
         ? 'No purchase invoice for the steel.'
-        : invoiceMatchesCert
+        : invoiceMatchesStockist
+          ? `Heat no. ${invoiceHeats.join(', ')} on the purchase invoice matches the stockist’s lot transfer and the mill certificate.`
+          : invoiceMatchesCert
           ? `Heat no. ${invoiceHeats.join(', ')} on the purchase invoice matches the mill certificate, but the seller’s role (mill or trader) is not shown.`
           : invoiceHeats.length
             ? `Invoice heat no. ${invoiceHeats.join(', ')} does not match the certificate (${certHeats.join(', ') || 'none read'}).`
             : 'No heat number could be read from the purchase invoice.',
-      [...heatEvidence(invoices, 'Invoice heat no.'), ...heatEvidence(certs, 'Mill certificate heat no.')],
-      invoiceMatchesCert
-        ? 'Confirm who sold the steel and that the invoiced lot is the certified heat.'
-        : 'Check the purchase invoice against the mill certificate.',
-      [...invoices, ...certs],
+      [...heatEvidence(invoices, 'Invoice heat no.'), ...heatEvidence(stockists, 'Lot transfer heat no.'), ...heatEvidence(certs, 'Mill certificate heat no.')],
+      invoiceMatchesStockist
+        ? 'Keep the invoice with the batch file.'
+        : invoiceMatchesCert
+          ? 'Confirm who sold the steel and that the invoiced lot is the certified heat.'
+          : 'Check the purchase invoice against the mill certificate.',
+      [...invoices, ...stockists, ...certs],
     ),
     link(
       'factory-job_worker',
@@ -438,14 +495,28 @@ export function buildTrace(
       'job_worker',
       'finished_batch',
       'Heat-treatment job-worker → Finished batch',
-      'missing',
-      'No return challan or post-heat-treatment output record.',
-      dispatches.flatMap((r) => {
-        const f = field(r, 'batchId')
-        return f ? [fieldEvidence(r, f, 'Dispatch record batch ID')] : []
-      }),
-      'Get the job-worker’s return challan with the returned quantity, and their furnace energy record for this job.',
-      dispatches,
+      returns.length ? (returnAgrees ? 'supported' : 'needs_review') : 'missing',
+      returns.length
+        ? returnAgrees
+          ? `Return challan for batch ${batchId} and heat no. ${returnHeats.join(', ')} shows the goods came back.`
+          : 'A return challan is present, but its batch or heat number does not match this batch.'
+        : 'No return challan or post-heat-treatment output record.',
+      [
+        ...returns.flatMap((r) => (['batchId', 'heatNumber', 'quantity'] as const).flatMap((key) => {
+          const f = field(r, key)
+          return f ? [fieldEvidence(r, f, { batchId: 'Return challan batch ref.', heatNumber: 'Return challan heat no.', quantity: 'Quantity returned' }[key])] : []
+        })),
+        ...dispatches.flatMap((r) => {
+          const f = field(r, 'batchId')
+          return f ? [fieldEvidence(r, f, 'Dispatch record batch ID')] : []
+        }),
+      ],
+      returns.length
+        ? returnAgrees
+          ? 'Keep the return challan with the batch file.'
+          : 'Check the return challan against the outward challan and the certificate.'
+        : 'Get the job-worker’s return challan with the returned quantity, and their furnace energy record for this job.',
+      [...returns, ...dispatches],
     ),
   ]
 
@@ -464,7 +535,7 @@ export function buildTrace(
   const stockistProposal = (['mill-stockist', 'stockist-factory'] as const).some(
     (id) => recordStates[id]?.active && recordStates[id]?.record.kind === 'proposal',
   )
-  if (stockistProposal) {
+  if (stockistProposal && stages.find((s) => s.id === 'stockist')!.requirements[0]!.status === 'missing') {
     const stockist = stages.find((s) => s.id === 'stockist')!
     stockist.requirements[0]!.status = 'proposed'
     stockist.status = worst(stockist.requirements.map((r) => r.status))

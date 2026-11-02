@@ -2,6 +2,7 @@ import { ROLES, isRoleId, switchRole, useRole } from '../../features/roles/roles
 import { getPage, pageHref } from '../../lib/routes'
 import type { PageId, PageRoute } from '../../types/navigation'
 import { Icon } from '../Icon'
+import { ResetButton } from './ResetButton'
 
 interface NavListProps {
   pages: readonly PageRoute[]
@@ -95,7 +96,8 @@ export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
         <NavList pages={role.more.map(getPage)} currentPageId={currentPageId} onNavigate={onNavigate} />
       </nav>
 
-      <p className="m-3 flex items-center gap-2 rounded-xl bg-white/5 p-3 text-xs text-forest-200">
+      <ResetButton />
+      <p className="m-3 mt-2 flex items-center gap-2 rounded-xl bg-white/5 p-3 text-xs text-forest-200">
         <Icon name="lock" className="size-4 shrink-0 text-moss-400" />
         Your documents stay on this device.
       </p>

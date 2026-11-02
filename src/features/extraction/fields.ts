@@ -74,8 +74,9 @@ export const FIELD_SPECS: Record<FieldKey, FieldSpec> = {
     normalize: normalizeReference,
   },
   supplierName: {
-    // Found by position, not by a label; see findCompanyHeading.
+    // A "Manufacturer" label when the document has one; otherwise the heading, by position (see findCompanyHeading).
     label: 'Supplier (heading)',
+    labels: [/^(?:manufacturer|issued by)\s*:?$/i],
     value: /.+/,
     match: 'full',
     normalize: normalizeText,
@@ -174,6 +175,8 @@ export const EXPECTED_FIELDS: Record<DocumentKind, FieldKey[]> = {
   purchase_invoice: ['material', 'heatNumber', 'quantity', 'batchId', 'supplierName'],
   dispatch_record: ['material', 'batchId', 'quantity', 'buyerName'],
   job_worker_energy: ['electricityConsumption', 'billingPeriod', 'batchId'],
+  stockist_record: ['heatNumber', 'quantity', 'batchId', 'supplierName'],
+  return_challan: ['heatNumber', 'challanNumber', 'jobWorkerName', 'batchId', 'quantity'],
   unknown: ['batchId', 'heatNumber', 'quantity'],
 }
 
@@ -360,7 +363,10 @@ export function extractFields(
 ): ExtractedField[] {
   return EXPECTED_FIELDS[kind].map((key) => {
     const spec = FIELD_SPECS[key]
-    if (key === 'supplierName') return toField(key, content.lines ? findCompanyHeading(content.lines, ctx) : [], true)
+    if (key === 'supplierName') {
+      const labelled = content.lines ? findInLines(spec, content.lines, ctx) : []
+      return labelled.length ? toField(key, labelled, false) : toField(key, content.lines ? findCompanyHeading(content.lines, ctx) : [], true)
+    }
     const candidates = [
       ...(content.lines && spec.labels ? findInLines(spec, content.lines, ctx) : []),
       ...(content.tables ? findInTables(spec, content.tables, ctx) : []),

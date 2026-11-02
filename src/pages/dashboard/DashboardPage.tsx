@@ -112,6 +112,15 @@ export function DashboardPage() {
               Upload my documents
             </a>
           </div>
+          <button
+            type="button"
+            onClick={quick.tryComplete}
+            disabled={quick.busy}
+            className="mt-3 inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-forest-700 hover:text-forest-900 focus-visible:outline-2 focus-visible:outline-forest-500 disabled:cursor-wait disabled:opacity-60"
+          >
+            Or try a complete batch, where every paper is in
+            <Icon name="arrow-right" className="size-4" />
+          </button>
           <QuickStartStatus state={quick.state} />
         </section>
       )}
