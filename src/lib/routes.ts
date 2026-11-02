@@ -7,27 +7,17 @@ export const PAGES: readonly PageRoute[] = [
     path: '/',
     label: 'Home',
     summary: 'What is ready, what to fix next, and the four tasks for one batch.',
-    nav: 'main',
   },
   {
     id: 'fix',
     path: '/fix',
     label: 'Fix problems',
     summary: 'One problem at a time: what does not match or is missing, and who to ask.',
-    nav: 'main',
-  },
-  {
-    id: 'views',
-    path: '/views',
-    label: 'Who sees what',
-    summary: 'The same batch as each person sees it: owner, staff, steel supplier, job-worker, consultant and export buyer.',
-    nav: 'main',
   },
   {
     id: 'upload',
     path: '/upload',
     label: 'Upload documents',
-    nav: 'more',
     summary:
       'Add invoices, mill certificates, job-work challans, bills and logs as PDF, image, CSV or Excel files. Files will be read in your browser only.',
     step: { number: 1, label: 'Upload' },
@@ -36,7 +26,6 @@ export const PAGES: readonly PageRoute[] = [
     id: 'validate',
     path: '/validate',
     label: 'Check documents',
-    nav: 'more',
     summary:
       'Review the values extracted from each document, confirm or correct them, and see which checks pass or need attention.',
     step: { number: 2, label: 'Check' },
@@ -45,7 +34,6 @@ export const PAGES: readonly PageRoute[] = [
     id: 'traceability',
     path: '/traceability',
     label: 'Supply chain',
-    nav: 'more',
     summary:
       'Follow the batch from the steel heat number through in-house production and the outsourced heat-treatment job-worker.',
     step: { number: 3, label: 'Supply chain' },
@@ -54,7 +42,6 @@ export const PAGES: readonly PageRoute[] = [
     id: 'passport',
     path: '/passport',
     label: 'Passport',
-    nav: 'main',
     summary:
       'Assemble a draft carbon passport for the batch, with each figure linked to its source evidence and review status.',
     step: { number: 4, label: 'Passport' },
@@ -64,30 +51,32 @@ export const PAGES: readonly PageRoute[] = [
     path: '/review',
     label: 'Challenge this batch',
     summary: 'The four questions a buyer or verifier asks, answered from the documents read so far. An evidence review, not a certification.',
-    nav: 'main',
   },
   {
     id: 'map',
     path: '/map',
     label: 'Evidence map',
     summary: 'How each paper links the steel to the finished batch, and what depends on each point if a paper is missing or wrong.',
-    nav: 'more',
   },
   {
     id: 'emissions',
     path: '/emissions',
     label: 'Emissions preview',
-    nav: 'more',
     summary: 'Electricity a bill states, times India’s official grid factor. Illustrative, never part of the passport.',
   },
   {
     id: 'export',
     path: '/export',
     label: 'Download',
-    nav: 'more',
     summary:
       'Download the reviewed draft and its evidence index to share with a buyer, clearly marked as not certified.',
     step: { number: 5, label: 'Download' },
+  },
+  {
+    id: 'roadmap',
+    path: '/next',
+    label: 'Phase 2 & 3 plan',
+    summary: 'What comes after the Ludhiana proof: an expert network for consultants, then a workspace for EU importers.',
   },
 ]
 

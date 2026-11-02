@@ -7,6 +7,7 @@ import { SimulatedNote } from '../../features/review/mapStatus'
 import { primaryButton, quietButton, sourceLink } from '../../features/review/ui'
 import { documentName } from '../../features/documents/documentName'
 import { SourceInspector } from '../../features/traceability/SourceInspector'
+import { roleCanFix, useRole } from '../../features/roles/roles'
 import { useHashLocation } from '../../lib/router'
 import { pageHref, pageLink } from '../../lib/routes'
 import type { SourceRef } from '../../types/extraction'
@@ -122,6 +123,7 @@ function MapScreen({
 
 /** The traced discrepancy: the two values, where each comes from, who to ask, and the one way to fix it. */
 function ConflictBanner({ conflict, onInspect, fixFrom }: { conflict: Conflict; onInspect: (s: SourceRef) => void; fixFrom: 'map' | 'review' }) {
+  const canFix = roleCanFix(useRole())
   return (
     <section aria-labelledby="trace-title" className="rounded-2xl bg-status-missing/[0.04] p-5 ring-1 ring-status-missing/25 sm:p-6">
       <p className="text-xs font-semibold tracking-wide text-status-missing uppercase">Tracing a discrepancy</p>
@@ -154,10 +156,12 @@ function ConflictBanner({ conflict, onInspect, fixFrom }: { conflict: Conflict; 
         <p className="text-sm text-ink-700">
           Ask: <span className="font-semibold text-ink-900">{conflict.who ?? 'The issuer of the wrong document'}</span>
         </p>
-        <a href={pageLink('fix', { item: conflict.finding.key, from: fixFrom })} className={primaryButton}>
-          <Icon name="wrench" className="size-5" />
-          Fix this issue
-        </a>
+        {canFix && (
+          <a href={pageLink('fix', { item: conflict.finding.key, from: fixFrom })} className={primaryButton}>
+            <Icon name="wrench" className="size-5" />
+            Fix this issue
+          </a>
+        )}
       </div>
     </section>
   )

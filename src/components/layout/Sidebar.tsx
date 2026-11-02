@@ -1,4 +1,5 @@
-import { PAGES, pageHref } from '../../lib/routes'
+import { ROLES, isRoleId, switchRole, useRole } from '../../features/roles/roles'
+import { getPage, pageHref } from '../../lib/routes'
 import type { PageId, PageRoute } from '../../types/navigation'
 import { Icon } from '../Icon'
 
@@ -51,9 +52,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
+  const role = useRole()
   return (
     <div className="flex h-full flex-col bg-forest-950 text-forest-100">
-      <div className="flex items-center gap-3 px-5 pt-6 pb-8">
+      <div className="flex items-center gap-3 px-5 pt-6 pb-6">
         <span className="grid size-9 place-items-center rounded-xl bg-forest-700 text-forest-200 ring-1 ring-white/10">
           <Icon name="passport" className="size-5" />
         </span>
@@ -63,10 +65,34 @@ export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
         </div>
       </div>
 
-      <nav aria-label="Main" className="flex-1 px-3">
-        <NavList pages={PAGES.filter((p) => p.nav === 'main')} currentPageId={currentPageId} onNavigate={onNavigate} large />
+      <div className="mx-3 mb-6">
+        <label htmlFor="role" className="mb-1.5 flex items-center gap-1.5 px-1 text-xs font-medium text-forest-300">
+          <Icon name="views" className="size-3.5" />
+          Viewing as
+        </label>
+        <select
+          id="role"
+          value={role.id}
+          onChange={(event) => {
+            const next = event.target.value
+            if (!isRoleId(next)) return
+            switchRole(next)
+            onNavigate?.()
+          }}
+          className="min-h-11 w-full cursor-pointer rounded-xl bg-white/10 px-3 text-sm font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss-400"
+        >
+          {ROLES.map((r) => (
+            <option key={r.id} value={r.id} className="text-ink-900">
+              {r.label} · {r.who}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-3">
+        <NavList pages={role.main.map(getPage)} currentPageId={currentPageId} onNavigate={onNavigate} large />
         <p className="mt-8 mb-2 px-3 text-xs font-medium text-forest-300">More</p>
-        <NavList pages={PAGES.filter((p) => p.nav === 'more')} currentPageId={currentPageId} onNavigate={onNavigate} />
+        <NavList pages={role.more.map(getPage)} currentPageId={currentPageId} onNavigate={onNavigate} />
       </nav>
 
       <p className="m-3 flex items-center gap-2 rounded-xl bg-white/5 p-3 text-xs text-forest-200">

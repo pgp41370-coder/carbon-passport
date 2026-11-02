@@ -8,6 +8,7 @@ export type IconName =
   | 'review'
   | 'map'
   | 'circle-dashed'
+  | 'roadmap'
   | 'upload'
   | 'validate'
   | 'traceability'
@@ -56,6 +57,13 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   'circle-dashed': <circle cx="12" cy="12" r="9" strokeDasharray="3.5 3" />,
+  roadmap: (
+    <>
+      <path d="M4 21V4" />
+      <path d="M4 4h11l-2 3.5L15 11H4" />
+      <path d="M18 15v6M15 18h6" />
+    </>
+  ),
   emissions: <path d="M13 2 4.5 13.5H12L11 22l8.5-11.5H12L13 2Z" />,
   views: (
     <>

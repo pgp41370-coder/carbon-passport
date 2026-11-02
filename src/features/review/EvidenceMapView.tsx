@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from 'react'
 import { Icon } from '../../components/Icon'
 import { pageLink } from '../../lib/routes'
+import { roleCanFix, useRole } from '../roles/roles'
 import type { SourceRef } from '../../types/extraction'
 import { documentName } from '../documents/documentName'
 import { TRACE_STATUS } from '../traceability/traceStatus'
@@ -166,7 +167,7 @@ function NodeDetail({ map, node, onInspect, onClear, fixFrom }: { map: EvidenceM
   const inbound = map.edges.find((e) => e.to === node.id)
   const downstream = downstreamOf(map, node.id)
   const step = MAP_NODE_ORDER.indexOf(node.id) + 1
-  const finding = node.findings[0]
+  const finding = roleCanFix(useRole()) ? node.findings[0] : undefined
 
   return (
     <section aria-labelledby="node-title" className="rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(21_26_24/0.04)] sm:p-6">

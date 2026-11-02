@@ -7,6 +7,7 @@ import type { Conflict, MapStatus } from '../../features/review/evidenceMap'
 import { MapStatusChip, SimulatedNote } from '../../features/review/mapStatus'
 import { MAP_STATUS } from '../../features/review/mapStatusMeta'
 import { primaryButton, quietButton, secondaryButton, sourceLink } from '../../features/review/ui'
+import { roleCanFix, useRole } from '../../features/roles/roles'
 import { SourceInspector } from '../../features/traceability/SourceInspector'
 import { pageHref, pageLink } from '../../lib/routes'
 import type { SourceRef } from '../../types/extraction'
@@ -222,6 +223,7 @@ function CompletenessQuestion({ challenge }: { challenge: Challenge }) {
 }
 
 function ChecklistRow({ item }: { item: ChecklistItem }) {
+  const canFix = roleCanFix(useRole())
   const meta = MAP_STATUS[item.status]
   return (
     <li className="flex items-center gap-3 py-2">
@@ -229,7 +231,7 @@ function ChecklistRow({ item }: { item: ChecklistItem }) {
       <span className="min-w-0 flex-1 text-sm text-ink-900" title={item.detail}>
         {item.label}
       </span>
-      {item.status === 'supported' ? (
+      {item.status === 'supported' || !canFix ? (
         <span className="text-xs text-ink-500">{meta.label}</span>
       ) : (
         <a href={pageLink('fix', { item: item.key, from: 'review' })} className={sourceLink}>
@@ -243,6 +245,7 @@ function ChecklistRow({ item }: { item: ChecklistItem }) {
 // ── 3 · Is any evidence contradictory? ──────────────────────────────────────
 function ContradictionQuestion({ challenge, onInspect }: { challenge: Challenge; onInspect: (s: SourceRef) => void }) {
   const { conflicts, otherProblems, answer, status, label } = challenge.contradictions
+  const canFix = roleCanFix(useRole())
   return (
     <Question id="q-conflicts" number={3} question="Is any evidence contradictory?" status={status} statusLabel={label} answer={answer}>
       <div className="space-y-4">
@@ -259,9 +262,11 @@ function ContradictionQuestion({ challenge, onInspect }: { challenge: Challenge;
                   <span className="min-w-0 flex-1 text-sm text-ink-900" title={f.detail}>
                     {f.title}
                   </span>
-                  <a href={pageLink('fix', { item: f.key, from: 'review' })} className={sourceLink}>
-                    Fix<span className="sr-only"> {f.title}</span>
-                  </a>
+                  {canFix && (
+                    <a href={pageLink('fix', { item: f.key, from: 'review' })} className={sourceLink}>
+                      Fix<span className="sr-only"> {f.title}</span>
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -273,6 +278,7 @@ function ContradictionQuestion({ challenge, onInspect }: { challenge: Challenge;
 }
 
 function ConflictCard({ conflict, onInspect }: { conflict: Conflict; onInspect: (s: SourceRef) => void }) {
+  const canFix = roleCanFix(useRole())
   const review = conflict.issue.review
   return (
     <article className="rounded-xl bg-status-missing/[0.03] p-4 ring-1 ring-status-missing/25 sm:p-5">
@@ -309,10 +315,12 @@ function ConflictCard({ conflict, onInspect }: { conflict: Conflict; onInspect: 
           <Icon name="map" className="size-4" />
           Trace issue
         </a>
-        <a href={pageLink('fix', { item: conflict.finding.key, from: 'review' })} className={quietButton}>
-          <Icon name="wrench" className="size-4" />
-          Fix this issue
-        </a>
+        {canFix && (
+          <a href={pageLink('fix', { item: conflict.finding.key, from: 'review' })} className={quietButton}>
+            <Icon name="wrench" className="size-4" />
+            Fix this issue
+          </a>
+        )}
       </div>
     </article>
   )
@@ -356,7 +364,10 @@ function Summary({ challenge }: { challenge: Challenge }) {
     { label: 'Broken traceability links', value: `${summary.brokenLinks} of ${summary.totalLinks}`, status: summary.brokenLinks ? 'missing' : 'supported' },
     { label: 'Missing supporting documents', value: String(c.missing), status: c.missing ? 'missing' : 'supported' },
   ]
-  const fixHref = summary.next.findingKey ? pageLink('fix', { item: summary.next.findingKey, from: 'review' }) : pageHref('export')
+  // Only the MSME side fixes; a buyer or consultant takes the draft with the findings instead.
+  const canFix = roleCanFix(useRole())
+  const fixing = canFix && !!summary.next.findingKey
+  const fixHref = fixing ? pageLink('fix', { item: summary.next.findingKey!, from: 'review' }) : pageHref('export')
   return (
     <section aria-labelledby="summary-title" className="rounded-2xl bg-forest-950 p-5 text-white sm:p-7">
       <h2 id="summary-title" className="text-lg font-semibold">
@@ -375,7 +386,7 @@ function Summary({ challenge }: { challenge: Challenge }) {
         ))}
       </dl>
       <div className="mt-6 border-t border-white/10 pt-5">
-        <p className="text-xs text-forest-200">Recommended next action</p>
+        <p className="text-xs text-forest-200">{canFix ? 'Recommended next action' : 'What the exporter should do next'}</p>
         <p className="mt-1 text-base">{summary.next.text}</p>
       </div>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -383,7 +394,7 @@ function Summary({ challenge }: { challenge: Challenge }) {
           href={fixHref}
           className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-5 text-base font-semibold text-forest-900 transition-colors duration-150 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss-400"
         >
-          {summary.next.findingKey ? 'Return to Fix Problems' : 'Download the draft'}
+          {fixing ? 'Return to Fix Problems' : 'Download the draft'}
           <Icon name="arrow-right" className="size-5" />
         </a>
         <a

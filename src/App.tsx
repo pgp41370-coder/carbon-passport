@@ -5,7 +5,10 @@ import { useHashLocation } from './lib/router'
 import { ComingNextPage } from './pages/ComingNextPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { FixPage } from './pages/fix/FixPage'
-import { PersonaViewsPage } from './pages/views/PersonaViewsPage'
+import { RoleHome } from './pages/dashboard/RoleHome'
+import { RoadmapPage } from './pages/roadmap/RoadmapPage'
+import { RoleNotice } from './components/RoleNotice'
+import { isRoleId, roleUses, setRole, useRole } from './features/roles/roles'
 import { DocumentUploadPage } from './pages/upload/DocumentUploadPage'
 import { ExtractionValidationPage } from './pages/validate/ExtractionValidationPage'
 import { TraceabilityPage } from './pages/trace/TraceabilityPage'
@@ -20,6 +23,15 @@ function App() {
   const page = findPageByPath(path)
   const mode = parseWorkflowMode(params.get('mode'))
   const routeKey = `${page.id}:${mode ?? ''}`
+  const role = useRole()
+
+  // Old "Who sees what" links (#/views?as=buyer) now just switch the whole app to that role.
+  useEffect(() => {
+    if (path !== '/views') return
+    const as = params.get('as')
+    if (isRoleId(as)) setRole(as)
+    window.location.replace('#/')
+  }, [path, params])
 
   useEffect(() => {
     document.title =
@@ -41,12 +53,14 @@ function App() {
 
   return (
     <AppShell currentPageId={page.id}>
-      {page.id === 'dashboard' ? (
-        <DashboardPage />
+      {!roleUses(role, page.id) ? (
+        <RoleNotice role={role} page={page} />
+      ) : page.id === 'dashboard' ? (
+        role.id === 'owner' ? <DashboardPage /> : <RoleHome key={role.id} role={role} />
       ) : page.id === 'fix' ? (
         <FixPage />
-      ) : page.id === 'views' ? (
-        <PersonaViewsPage persona={params.get('as')} />
+      ) : page.id === 'roadmap' ? (
+        <RoadmapPage />
       ) : page.id === 'upload' ? (
         <DocumentUploadPage mode={mode} />
       ) : page.id === 'validate' ? (
