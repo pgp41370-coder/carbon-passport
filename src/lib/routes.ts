@@ -60,6 +60,20 @@ export const PAGES: readonly PageRoute[] = [
     step: { number: 4, label: 'Passport' },
   },
   {
+    id: 'review',
+    path: '/review',
+    label: 'Challenge this batch',
+    summary: 'The four questions a buyer or verifier asks, answered from the documents read so far. An evidence review, not a certification.',
+    nav: 'main',
+  },
+  {
+    id: 'map',
+    path: '/map',
+    label: 'Evidence map',
+    summary: 'How each paper links the steel to the finished batch, and what depends on each point if a paper is missing or wrong.',
+    nav: 'more',
+  },
+  {
     id: 'emissions',
     path: '/emissions',
     label: 'Emissions preview',
@@ -98,4 +112,10 @@ export function parseWorkflowMode(value: string | null): WorkflowMode | null {
 
 export function pageHref(id: PageId, mode?: WorkflowMode): string {
   return toHref(getPage(id).path, mode ? { mode } : undefined)
+}
+
+/** A page link with query parameters, e.g. the Fix screen opened at one problem. */
+export function pageLink(id: PageId, params: Record<string, string | undefined>): string {
+  const defined = Object.fromEntries(Object.entries(params).filter((entry): entry is [string, string] => entry[1] !== undefined))
+  return toHref(getPage(id).path, defined)
 }

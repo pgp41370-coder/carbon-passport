@@ -416,7 +416,12 @@ function BuyerView({ passport }: { passport: CarbonPassport }) {
         </p>
       </div>
       <p className="rounded-xl bg-status-review/[0.08] p-4 text-sm text-status-review-ink ring-1 ring-status-review/25">{PASSPORT_DISCLAIMER}</p>
-      <ButtonLink href={pageHref('export')}>Download the draft</ButtonLink>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <ButtonLink href={pageHref('review')}>Challenge this batch</ButtonLink>
+        <a href={pageHref('export')} className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-forest-800 hover:bg-forest-50 focus-visible:outline-2 focus-visible:outline-forest-500">
+          Download the draft
+        </a>
+      </div>
     </>
   )
 }

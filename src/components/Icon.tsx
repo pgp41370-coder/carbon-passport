@@ -5,6 +5,9 @@ export type IconName =
   | 'fix'
   | 'views'
   | 'emissions'
+  | 'review'
+  | 'map'
+  | 'circle-dashed'
   | 'upload'
   | 'validate'
   | 'traceability'
@@ -37,6 +40,22 @@ export type IconName =
   | 'external'
 
 const PATHS: Record<IconName, ReactNode> = {
+  review: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 5 5" />
+      <path d="m7.8 10.6 1.9 1.9 3.5-3.6" />
+    </>
+  ),
+  map: (
+    <>
+      <circle cx="5" cy="6" r="2.5" />
+      <circle cx="19" cy="6" r="2.5" />
+      <circle cx="12" cy="18" r="2.5" />
+      <path d="M7.5 6h9M6.3 8.2l4.4 7.6M17.7 8.2l-4.4 7.6" />
+    </>
+  ),
+  'circle-dashed': <circle cx="12" cy="12" r="9" strokeDasharray="3.5 3" />,
   emissions: <path d="M13 2 4.5 13.5H12L11 22l8.5-11.5H12L13 2Z" />,
   views: (
     <>

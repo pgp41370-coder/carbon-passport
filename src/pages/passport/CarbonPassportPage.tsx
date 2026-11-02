@@ -108,6 +108,20 @@ export function CarbonPassportPage() {
               </p>
             </div>
 
+            <a
+              href={pageHref('review')}
+              className="group flex items-center gap-3 rounded-xl bg-forest-950 px-4 py-3.5 text-white transition-colors duration-150 hover:bg-forest-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/10">
+                <Icon name="review" className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-semibold">Challenge this batch</span>
+                <span className="block text-sm text-forest-200">Review it the way an EU buyer or verifier would</span>
+              </span>
+              <Icon name="arrow-right" className="size-5 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+            </a>
+
             <dl className="divide-y divide-line rounded-xl border border-line">
               {keyFacts(passport).map(({ label, claim }) => (
                 <div key={label} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">

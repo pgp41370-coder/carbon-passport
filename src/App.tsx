@@ -12,6 +12,8 @@ import { TraceabilityPage } from './pages/trace/TraceabilityPage'
 import { CarbonPassportPage } from './pages/passport/CarbonPassportPage'
 import { ExportPage } from './pages/export/ExportPage'
 import { EmissionsPage } from './pages/emissions/EmissionsPage'
+import { ChallengePage } from './pages/review/ChallengePage'
+import { EvidenceMapPage } from './pages/map/EvidenceMapPage'
 
 function App() {
   const { path, params } = useHashLocation()
@@ -53,6 +55,10 @@ function App() {
         <TraceabilityPage />
       ) : page.id === 'passport' ? (
         <CarbonPassportPage />
+      ) : page.id === 'review' ? (
+        <ChallengePage />
+      ) : page.id === 'map' ? (
+        <EvidenceMapPage />
       ) : page.id === 'emissions' ? (
         <EmissionsPage />
       ) : page.id === 'export' ? (

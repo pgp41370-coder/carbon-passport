@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Icon } from '../../components/Icon'
 import { findSampleFile } from '../../data/samplePack'
+import { documentName } from '../../features/documents/documentName'
 import { ACCEPT_ATTRIBUTE } from '../../features/documents/fileTypes'
 import { fixContext, fixGuideFor, type FixGuide } from '../../features/fixes/fixGuide'
 import { useFixActions, type FixRequest } from '../../features/fixes/useFixActions'
@@ -63,20 +64,24 @@ export function FixPage() {
   if (items.length === 0)
     return (
       <div className="mx-auto max-w-2xl space-y-4">
+        <BackLink from={params.get('from')} />
         <FixStatus state={fix.state} counts={counts} onDismiss={fix.dismiss} />
         <Done title="Nothing left to fix" body="Every required item was found in a document. The passport is still a draft for a person to review." href={pageHref('passport')} action="Open passport" />
       </div>
     )
 
-  // Start at the first missing item when Home's "Get missing papers" task was used.
+  // Start at one named problem (from the verifier review or the evidence map), or at the
+  // first missing item when Home's "Get missing papers" task was used.
   const firstMissing = items.findIndex((i) => i.kind === 'missing')
-  const start = params.get('show') === 'missing' && firstMissing >= 0 ? firstMissing : 0
+  const named = items.findIndex((i) => i.finding.key === params.get('item'))
+  const start = named >= 0 ? named : params.get('show') === 'missing' && firstMissing >= 0 ? firstMissing : 0
   const index = Math.min(position ?? start, items.length - 1)
   const { finding, kind } = items[index]
   const guide = fixGuideFor(finding, fixContext(passport))
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
+      <BackLink from={params.get('from')} />
       <FixStatus state={fix.state} counts={counts} onDismiss={fix.dismiss} />
 
       <article className="rounded-2xl border border-line bg-surface p-5 sm:p-7">
@@ -298,8 +303,14 @@ function Done({ title, body, href, action }: { title: string; body: string; href
   )
 }
 
-/** "CP-LDH-2026-001_SAMPLE_job-work-challan.jpg" → "Job work challan". */
-function documentName(fileName: string) {
-  const base = fileName.replace(/^CP-LDH-\d{4}-\d{3}_SAMPLE_/, '').replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ')
-  return base.charAt(0).toUpperCase() + base.slice(1)
+/** Way back to where the user came from, so a fix opened from the review returns to it. */
+function BackLink({ from }: { from: string | null }) {
+  const target = from === 'review' ? { href: pageHref('review'), label: 'Back to the verifier review' } : from === 'map' ? { href: pageHref('map'), label: 'Back to the evidence map' } : null
+  if (!target) return null
+  return (
+    <a href={target.href} className={`${quiet} -ml-3`}>
+      <Icon name="arrow-left" className="size-4" />
+      {target.label}
+    </a>
+  )
 }
