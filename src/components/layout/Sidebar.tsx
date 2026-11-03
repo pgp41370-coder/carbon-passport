@@ -69,7 +69,7 @@ export function Sidebar({ currentPageId, onNavigate }: SidebarProps) {
       <div className="mx-3 mb-6">
         <label htmlFor="role" className="mb-1.5 flex items-center gap-1.5 px-1 text-xs font-medium text-forest-300">
           <Icon name="views" className="size-3.5" />
-          Viewing as
+          Who sees what
         </label>
         <select
           id="role"

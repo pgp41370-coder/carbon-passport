@@ -107,9 +107,7 @@ export function CarbonPassportPage() {
               </div>
               {estimate.total !== undefined ? (
                 <a href={pageHref('emissions')} className="text-sm text-ink-600 hover:text-ink-900 focus-visible:outline-2 focus-visible:outline-forest-500">
-                  Carbon estimate:{' '}
-                  <span className="font-semibold text-ink-900 tabular-nums">{estimate.total.toLocaleString('en-IN', { maximumFractionDigits: 1 })} tCO₂e</span>{' '}
-                  <span className="font-semibold text-forest-700 underline">how</span>
+                  Carbon estimate: <span className="font-semibold text-forest-700 underline">ready in Emissions preview</span>
                 </a>
               ) : (
                 <p className="text-sm text-ink-600">

@@ -61,8 +61,8 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'emissions',
     path: '/emissions',
-    label: 'Carbon estimate',
-    summary: 'The batch’s carbon estimate, line by line: steel at the EU default value, the factory’s electricity shared by weight, and the job-worker’s furnace.',
+    label: 'Emissions preview',
+    summary: 'Electricity the papers state, times India’s official grid factor; once every paper is in, the batch estimate beside the EU default. Never on the passport.',
   },
   {
     id: 'export',
@@ -75,8 +75,8 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'roadmap',
     path: '/next',
-    label: 'Phase 2 & 3 plan',
-    summary: 'What comes after the Ludhiana proof: an expert network for consultants, then a workspace for EU importers.',
+    label: 'Future scope',
+    summary: 'What is built today and what comes next, layer by layer, including where Claude is used; then Phase 2 and Phase 3.',
   },
 ]
 

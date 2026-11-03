@@ -1,3 +1,4 @@
+import qrCode from '../../assets/qr-live-app.png'
 import { Icon } from '../../components/Icon'
 import { countFindings, groupFindings } from '../../features/passport/findings'
 import { selectBatch } from '../../features/passport/selectedBatch'
@@ -207,6 +208,14 @@ export function DashboardPage() {
       {workspace.total > 0 && (
         <SampleDataDisclaimer compact illustrative={passport ? passport.illustrative : workspace.uploads === 0} hasDocuments />
       )}
+
+      <section aria-label="Open on a phone" className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
+        <img src={qrCode} alt="QR code for carbon-passport-beta.vercel.app" width={96} height={96} className="size-24 shrink-0 rounded-lg bg-white p-1 ring-1 ring-line" />
+        <div>
+          <p className="text-sm font-semibold text-ink-900">Scan to open on a phone</p>
+          <p className="mt-0.5 font-mono text-xs break-all text-ink-600">carbon-passport-beta.vercel.app</p>
+        </div>
+      </section>
     </div>
   )
 }

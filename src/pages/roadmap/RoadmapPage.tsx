@@ -3,8 +3,9 @@ import { Icon } from '../../components/Icon'
 import { switchRole, type RoleId } from '../../features/roles/roles'
 
 /**
- * The plan after the Ludhiana proof, as the team set it out: the deck (slide 05)
- * names the phases, and the final report's persona table, revenue streams and
+ * Future scope: what the prototype does today against the eight-layer product in
+ * the deck (appendix A1), where Claude is used, then the plan after the Ludhiana
+ * proof. The deck (slide 05) names the phases, and the final report's persona table, revenue streams and
  * roadmap give what is in each. Every number is a target or a quote, never a
  * result, and Phases 2 and 3 are not built: the role previews only show the idea.
  */
@@ -69,6 +70,50 @@ const PHASES: Phase[] = [
   },
 ]
 
+type Status = 'built' | 'partly' | 'next'
+
+const STATUS: Record<Status, { label: string; chip: string; dot: string }> = {
+  built: { label: 'Built', chip: 'bg-forest-50 text-forest-800 ring-forest-200', dot: 'bg-forest-500' },
+  partly: { label: 'Partly built', chip: 'bg-status-review/10 text-status-review-ink ring-status-review/30', dot: 'bg-status-review' },
+  next: { label: 'Next', chip: 'bg-canvas text-ink-600 ring-line', dot: 'bg-ink-400' },
+}
+
+// The eight layers of the target architecture, with the prototype today and the Year-1 cloud cost (deck appendix A1).
+const LAYERS: { n: string; name: string; does: string; today: string; next: string; status: Status; cost: string }[] = [
+  { n: '8', name: 'Trust layer', does: 'Consent-based sharing, prices hidden, audit log, encryption', today: 'Data stays on this device; “Reset and start over” clears it', next: 'Sign-ins (Cognito), encryption keys (KMS), firewall (WAF), secrets, monitoring', status: 'partly', cost: '19,875' },
+  { n: '7', name: 'Workspaces', does: 'Owner’s orders, supplier network, verifier view, buyer link', today: 'Home, orders, six role views, Challenge this batch, Evidence map', next: 'Each person signs in on their own device (CloudFront, ECS Fargate)', status: 'built', cost: '88,946' },
+  { n: '6', name: 'Calculation', does: 'Emissions from code with sourced factors; never from AI', today: 'Electricity × CEA factor; batch estimate at the EU default once every paper is in', next: 'Versioned factor and rule library', status: 'built', cost: '0' },
+  { n: '5', name: 'Evidence graph', does: 'Papers → values → heat number → batch; every link keeps file, page and line', today: 'Source link on every value, stored in this browser', next: 'PostgreSQL with a standby copy, and file storage, in AWS Mumbai', status: 'built', cost: '76,061' },
+  { n: '4', name: 'Human approval', does: 'Nothing is sent, shared or final without the owner', today: 'The owner presses send; the app never sends', next: 'Same rule, for every agent', status: 'built', cost: '0' },
+  { n: '3', name: 'Agents', does: 'Intake, Reconcile, Request, Follow-up, Verifier-prep; they only propose', today: 'Rules draft the request in English and Hindi', next: 'Claude Sonnet 5.5 on Amazon Bedrock', status: 'partly', cost: '11,849' },
+  { n: '2', name: 'Document AI', does: 'Reads each paper; a value needs its page, line and quote', today: 'OCR (Tesseract), PDF.js and rules, in the browser', next: 'Claude Haiku 5.5 on Amazon Bedrock', status: 'partly', cost: '566' },
+  { n: '1', name: 'Capture', does: 'Upload, phone photo, WhatsApp, email, Tally / ERP export', today: 'Upload files and photos; WhatsApp as a ready link', next: 'WhatsApp Business API, email intake (SES), Tally / ERP export', status: 'partly', cost: '910' },
+  { n: '–', name: 'Staging', does: 'A test copy that checks every release before customers see it', today: 'Release script with automatic end-to-end checks', next: 'A full test copy of the app on AWS', status: 'partly', cost: '46,179' },
+]
+
+// How Claude is used in production, with the cost inputs from the deck (appendix A4, A6, A7).
+const CLAUDE: { model: string; job: string; detail: string; cost: string }[] = [
+  {
+    model: 'Claude Haiku 5.5',
+    job: 'Reads every paper',
+    detail: '6 papers a batch · about 5,784 tokens in, 500 out · US$0.10 / 0.50 per million tokens',
+    cost: '₹566 in Year 1',
+  },
+  {
+    model: 'Claude Sonnet 5.5',
+    job: 'Five agents that propose the next step',
+    detail: '4 calls a batch · 8,000 tokens in, 1,000 out · US$2 / 10 per million tokens',
+    cost: '₹11,849 in Year 1',
+  },
+]
+
+const CLAUDE_RULES = [
+  ['Show your proof', 'Every value points to its page and line; a value without a source quote is rejected.'],
+  ['AI never decides', 'If two papers disagree, both are shown; the app never picks one or fills a gap.'],
+  ['A person approves', 'Agents draft; only the owner sends.'],
+  ['No AI carbon numbers', 'Emissions are plain code with sourced factors.'],
+]
+
 // Stage-gate targets at 12–18 months (Replicate), from the team's success scorecard.
 const GATE: [string, string][] = [
   ['≥ 150', 'paying and active subscribers'],
@@ -78,17 +123,106 @@ const GATE: [string, string][] = [
   ['≥ 80%', 'suppliers sending data'],
 ]
 
-const BUILT_ON_THE_WAY = ['Sign-ins for suppliers and job-workers', 'Many orders at once', 'WhatsApp Business messages', 'Hosting in AWS Mumbai', 'CBAM default values and versioned factors']
 
 export function RoadmapPage() {
   return (
     <div className="space-y-8">
       <header className="max-w-2xl">
         <h1 id="page-title" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-ink-900 outline-none sm:text-3xl">
-          What comes next
+          Future scope
         </h1>
-        <p className="mt-2 text-base text-ink-600">Phases 2 and 3 start only after the Ludhiana stage gate is met.</p>
+        <p className="mt-2 text-base text-ink-600">What the prototype already does, what the product adds next, and where Claude comes in. Phases 2 and 3 start only after the Ludhiana stage gate is met.</p>
       </header>
+
+      <section aria-labelledby="layers-title" className="rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(21_26_24/0.04)] sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="layers-title" className="text-base font-semibold text-ink-900">
+            Built today vs next · eight layers
+          </h2>
+          <ul aria-label="Legend" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-600">
+            {(Object.keys(STATUS) as Status[]).map((k) => (
+              <li key={k} className="flex items-center gap-1.5">
+                <span className={`size-2.5 rounded-full ${STATUS[k].dot}`} />
+                {STATUS[k].label}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="mt-4 hidden grid-cols-[2.2fr_2.4fr_2.4fr_0.9fr] gap-4 border-b border-line pb-2 text-xs font-semibold text-ink-600 lg:grid">
+          <span>Layer</span>
+          <span>In the prototype today</span>
+          <span>Next, in the product</span>
+          <span className="text-right">Year 1 (₹)</span>
+        </div>
+        <ol className="divide-y divide-line">
+          {LAYERS.map((l) => (
+            <li key={l.name} className="grid gap-2 py-3 lg:grid-cols-[2.2fr_2.4fr_2.4fr_0.9fr] lg:gap-4">
+              <div>
+                <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-900">
+                  <span className="text-xs text-ink-500 tabular-nums">{l.n}</span>
+                  {l.name}
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${STATUS[l.status].chip}`}>{STATUS[l.status].label}</span>
+                </p>
+                <p className="mt-0.5 text-xs text-ink-600">{l.does}</p>
+              </div>
+              <p className="flex items-start gap-1.5 text-sm text-ink-900">
+                <Icon name="check" className="mt-0.5 size-4 shrink-0 text-forest-600" />
+                <span>
+                  <span className="text-xs font-semibold text-ink-600 lg:hidden">Today: </span>
+                  {l.today}
+                </span>
+              </p>
+              <p className="flex items-start gap-1.5 text-sm text-ink-700">
+                <Icon name="arrow-right" className="mt-0.5 size-4 shrink-0 text-ink-400" />
+                <span>
+                  <span className="text-xs font-semibold text-ink-600 lg:hidden">Next: </span>
+                  {l.next}
+                </span>
+              </p>
+              <p className="text-sm text-ink-700 tabular-nums lg:text-right">
+                <span className="text-xs text-ink-600 lg:hidden">Year 1: ₹</span>
+                {l.cost}
+              </p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 flex flex-wrap justify-between gap-2 border-t border-line pt-3 text-sm">
+          <span className="text-ink-600">Total technology, Year 1 (AWS Mumbai, excl. GST)</span>
+          <span className="font-semibold text-ink-900 tabular-nums">₹2,44,387</span>
+        </p>
+      </section>
+
+      <section aria-labelledby="claude-title" className="rounded-2xl bg-forest-950 p-5 text-white sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="claude-title" className="text-base font-semibold">
+            Where Claude comes in
+          </h2>
+          <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold">Next · not in the prototype yet</span>
+        </div>
+        <p className="mt-1 text-sm text-forest-200">Today the prototype reads with OCR and rules, with no AI. In the product, Claude runs on Amazon Bedrock.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {CLAUDE.map((c) => (
+            <div key={c.model} className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+              <p className="text-xs font-semibold text-moss-400">{c.model}</p>
+              <p className="mt-1 text-base font-semibold">{c.job}</p>
+              <p className="mt-1 text-xs text-forest-200">{c.detail}</p>
+              <p className="mt-2 text-sm font-semibold tabular-nums">{c.cost}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-sm">
+          AI cost to read one batch of six papers: <span className="font-semibold tabular-nums">₹10.35</span>
+        </p>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+          {CLAUDE_RULES.map(([rule, text]) => (
+            <div key={rule}>
+              <dt className="text-sm font-semibold">{rule}</dt>
+              <dd className="text-xs text-forest-200">{text}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-4 text-xs text-forest-200">Files and the database stay in AWS Mumbai; AI reading uses Bedrock global inference.</p>
+      </section>
 
       <section aria-labelledby="phase-1" className="rounded-2xl bg-forest-950 p-5 text-white sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -158,21 +292,9 @@ export function RoadmapPage() {
         ))}
       </div>
 
-      <section aria-labelledby="built-title">
-        <h2 id="built-title" className="text-xs font-semibold tracking-wide text-ink-600 uppercase">
-          Built on the way
-        </h2>
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {BUILT_ON_THE_WAY.map((item) => (
-            <li key={item} className="rounded-full bg-surface px-3 py-1.5 text-sm text-ink-700 ring-1 ring-line">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <p className="text-xs text-ink-600">
-        Sources: team go-to-market plan and stage-gate targets (deck, slide 05); final report: persona table, revenue streams, roadmap and competitor
+        Sources: architecture, layer costs and AI inputs (deck, appendix A1, A4, A6, A7; AWS Price List API, Mumbai, 1 Nov 2026); team go-to-market plan and stage-gate targets (deck, slide 05); final report: persona table, revenue streams, roadmap and competitor
         table (Dubrink price from a third-party review, checked 23 Oct 2026); consultant quotes from our interviews with 5 exporters. Targets, not results.
       </p>
     </div>

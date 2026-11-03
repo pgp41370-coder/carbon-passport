@@ -6,8 +6,8 @@ import { pageHref } from '../../lib/routes'
 import type { SourceRef } from '../../types/extraction'
 
 /**
- * The batch carbon estimate, on its own screen so every line, factor and paper
- * can be shown. The passport only links here.
+ * Emissions preview, on its own screen so the passport never shows a carbon
+ * number. Once every paper is in, it also shows the batch estimate.
  */
 export function EmissionsPage() {
   const { loadState, passport, resultsById } = usePassport()
@@ -17,9 +17,9 @@ export function EmissionsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
         <h1 id="page-title" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-forest-950 outline-none sm:text-3xl">
-          Carbon estimate
+          Emissions preview
         </h1>
-        <p className="mt-2 text-ink-600">Worked out from the papers and published factors, line by line. An estimate, not a verified footprint.</p>
+        <p className="mt-2 text-ink-600">What the papers already allow you to work out, and what they don’t. Kept apart from the passport, which never shows a carbon number.</p>
       </header>
 
       {loadState.status === 'loading' && <p className="text-sm text-ink-600">Loading…</p>}
