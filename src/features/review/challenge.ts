@@ -1,6 +1,7 @@
 import type { ExtractionResult } from '../../types/extraction'
 import type { CarbonPassport } from '../../types/passport'
 import { fixContext, fixGuideFor } from '../fixes/fixGuide'
+import { batchEstimate } from '../passport/batchEstimate'
 import { groupFindings, type Finding } from '../passport/findings'
 import { buildEvidenceMap, type Conflict, type EvidenceMap, type MapNode, type MapStatus } from './evidenceMap'
 
@@ -102,8 +103,13 @@ export function buildChallenge(passport: CarbonPassport, resultsById: Record<str
   const extraProblems = otherProblems.filter((f) => !missingTopics.has(f.topic))
   if (extraProblems.length) reasons.push({ tone: 'review', text: `${plural(extraProblems.length, 'other problem')} raised by the checks: ${list(extraProblems.map((f) => lower(f.title)))}.` })
   if (check) reasons.push({ tone: 'review', text: `${plural(check, 'item')} need${check === 1 ? 's' : ''} a person to check before it can be relied on.` })
-  if (!passport.calculation.available)
-    reasons.push({ tone: 'missing', text: `No emissions figure is worked out for this batch: ${met} of ${prerequisites.length} things it needs are in place.` })
+  const estimate = batchEstimate(passport)
+  if (estimate.total !== undefined)
+    reasons.push({
+      tone: 'supported',
+      text: `Carbon estimate worked out: ${estimate.total} tCO₂e${estimate.perTonne !== undefined ? ` (${estimate.perTonne} per tonne)` : ''}, from the papers, the EU default value for the steel and the CEA grid factor. It is an estimate, not verified.`,
+    })
+  else reasons.push({ tone: 'missing', text: `No carbon estimate yet for this batch: ${met} of ${prerequisites.length} things it needs are in place.` })
 
   const blocked = map.conflicts.length > 0 || missing > 0 || otherProblems.length > 0
   const reliance = {

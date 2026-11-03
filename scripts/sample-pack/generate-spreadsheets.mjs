@@ -1,12 +1,15 @@
 // Generates the SYNTHETIC production-log spreadsheet for demo batch CP-LDH-2026-001.
 // Every company and figure is fictional. Dev-only tool; the output is committed.
-// Usage: node scripts/sample-pack/generate-spreadsheets.mjs
+// With --complete it writes the copy for the complete pack (public/samples/complete/), which adds a
+// monthly summary of the whole plant's output so the electricity bill can be shared out by weight.
+// Usage: node scripts/sample-pack/generate-spreadsheets.mjs [--complete]
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as XLSX from 'xlsx'
 
-const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'samples')
+const complete = process.argv.includes('--complete')
+const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'samples', ...(complete ? ['complete'] : []))
 const banner = 'SYNTHETIC SAMPLE DOCUMENT - FICTIONAL DATA FOR DEMONSTRATION - NOT A REAL BUSINESS RECORD'
 
 const log = [
@@ -33,6 +36,13 @@ const workbook = XLSX.utils.book_new()
 const logSheet = XLSX.utils.aoa_to_sheet(log)
 logSheet['!cols'] = [12, 18, 10, 32, 9, 11, 11, 10, 10].map((wch) => ({ wch }))
 XLSX.utils.book_append_sheet(workbook, logSheet, 'Production log')
+if (complete) {
+  const summary = [
+    ['Month', 'Plant output (kg)', 'Covers'],
+    ['January 2026', 48600, 'All batches made in the plant this month, before heat treatment'],
+  ]
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summary), 'Monthly summary')
+}
 XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(about), 'About (synthetic)')
 workbook.Props = { Title: 'Synthetic sample - production log', Subject: 'Not a real business record' }
 

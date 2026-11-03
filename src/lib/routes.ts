@@ -61,8 +61,8 @@ export const PAGES: readonly PageRoute[] = [
   {
     id: 'emissions',
     path: '/emissions',
-    label: 'Emissions preview',
-    summary: 'Electricity a bill states, times India’s official grid factor. Illustrative, never part of the passport.',
+    label: 'Carbon estimate',
+    summary: 'The batch’s carbon estimate, line by line: steel at the EU default value, the factory’s electricity shared by weight, and the job-worker’s furnace.',
   },
   {
     id: 'export',

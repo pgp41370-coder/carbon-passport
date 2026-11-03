@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { EmissionsPreview } from '../../features/passport/EmissionsPreview'
+import { CarbonEstimate } from '../../features/passport/CarbonEstimate'
 import { usePassport } from '../../features/passport/usePassport'
 import { SourceInspector } from '../../features/traceability/SourceInspector'
 import { pageHref } from '../../lib/routes'
 import type { SourceRef } from '../../types/extraction'
 
 /**
- * Kept on its own screen so the passport itself never shows a carbon number:
- * this is arithmetic on one bill, not the batch's footprint.
+ * The batch carbon estimate, on its own screen so every line, factor and paper
+ * can be shown. The passport only links here.
  */
 export function EmissionsPage() {
   const { loadState, passport, resultsById } = usePassport()
@@ -17,11 +17,9 @@ export function EmissionsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
         <h1 id="page-title" tabIndex={-1} className="text-2xl font-semibold tracking-tight text-forest-950 outline-none sm:text-3xl">
-          Emissions preview
+          Carbon estimate
         </h1>
-        <p className="mt-2 text-ink-600">
-          What the papers already allow you to work out, and what they don’t. This is not the batch’s carbon footprint.
-        </p>
+        <p className="mt-2 text-ink-600">Worked out from the papers and published factors, line by line. An estimate, not a verified footprint.</p>
       </header>
 
       {loadState.status === 'loading' && <p className="text-sm text-ink-600">Loading…</p>}
@@ -40,7 +38,7 @@ export function EmissionsPage() {
         </div>
       )}
 
-      {passport && <EmissionsPreview passport={passport} onInspect={setInspect} />}
+      {passport && <CarbonEstimate passport={passport} onInspect={setInspect} />}
 
       <SourceInspector source={inspect} result={inspect ? resultsById[inspect.documentId] : undefined} onClose={() => setInspect(null)} />
     </div>

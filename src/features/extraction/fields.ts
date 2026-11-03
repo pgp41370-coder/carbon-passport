@@ -136,6 +136,17 @@ export const FIELD_SPECS: Record<FieldKey, FieldSpec> = {
     columns: [/^output/i],
     tableMode: 'last',
   },
+  plantOutput: {
+    // The whole plant's output for the month, used only to share the plant's electricity bill.
+    label: 'Plant output (month, all batches)',
+    value: new RegExp(NUMBER),
+    match: 'prefix',
+    normalize: normalizeNumber,
+    unitFrom: unitInBrackets,
+    columns: [/^plant\s*output/i],
+    // One row per month; 'last' also reads the unit from the column heading.
+    tableMode: 'last',
+  },
   electricityConsumption: {
     label: 'Electricity consumption',
     labels: [/units?\s+consumed(?:\s*\([^)]*\))?/i, /(?:energy|electricity)\s+consumption(?:\s*\([^)]*\))?/i],
@@ -170,7 +181,7 @@ export const FIELD_SPECS: Record<FieldKey, FieldSpec> = {
 export const EXPECTED_FIELDS: Record<DocumentKind, FieldKey[]> = {
   mill_test_certificate: ['heatNumber', 'certificateNumber', 'supplierName'],
   job_work_challan: ['heatNumber', 'challanNumber', 'jobWorkerName', 'batchId', 'quantity'],
-  production_log: ['batchId', 'outputQuantity', 'heatNumber'],
+  production_log: ['batchId', 'outputQuantity', 'heatNumber', 'plantOutput'],
   electricity_bill: ['electricityConsumption', 'billingPeriod'],
   purchase_invoice: ['material', 'heatNumber', 'quantity', 'batchId', 'supplierName'],
   dispatch_record: ['material', 'batchId', 'quantity', 'buyerName'],

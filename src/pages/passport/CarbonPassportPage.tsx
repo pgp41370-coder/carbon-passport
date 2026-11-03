@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Card } from '../../components/Card'
 import { Icon } from '../../components/Icon'
+import { batchEstimate } from '../../features/passport/batchEstimate'
 import { ClaimList } from '../../features/passport/ClaimList'
 import { downloadText, exportFileName, passportToHtml, passportToJson } from '../../features/passport/exportPassport'
 import { CLAIM_LABELS, PASSPORT_DISCLAIMER } from '../../features/passport/passportLabels'
@@ -58,6 +59,7 @@ export function CarbonPassportPage() {
   const { loadState, passport, resultsById, documentCount } = usePassport()
   const [inspect, setInspect] = useState<SourceRef | null>(null)
   const [exported, setExported] = useState<string | null>(null)
+  const estimate = passport ? batchEstimate(passport) : null
 
   const exportAs = (kind: 'html' | 'json') => {
     if (!passport) return
@@ -95,7 +97,7 @@ export function CarbonPassportPage() {
         </div>
       )}
 
-      {passport && (
+      {passport && estimate && (
         <>
           <section aria-label="Passport summary" className="mx-auto max-w-2xl space-y-5 rounded-2xl border border-line bg-surface p-5 sm:p-7">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -103,9 +105,17 @@ export function CarbonPassportPage() {
                 <p className="text-sm text-ink-600">Batch</p>
                 <p className="font-mono text-2xl font-semibold tracking-tight text-ink-900">{passport.batchId}</p>
               </div>
-              <p className="text-sm text-ink-600">
-                Carbon footprint: <span className="font-semibold text-ink-900">{passport.calculation.available ? 'see details' : 'not calculated'}</span>
-              </p>
+              {estimate.total !== undefined ? (
+                <a href={pageHref('emissions')} className="text-sm text-ink-600 hover:text-ink-900 focus-visible:outline-2 focus-visible:outline-forest-500">
+                  Carbon estimate:{' '}
+                  <span className="font-semibold text-ink-900 tabular-nums">{estimate.total.toLocaleString('en-IN', { maximumFractionDigits: 1 })} tCO₂e</span>{' '}
+                  <span className="font-semibold text-forest-700 underline">how</span>
+                </a>
+              ) : (
+                <p className="text-sm text-ink-600">
+                  Carbon footprint: <span className="font-semibold text-ink-900">not calculated</span>
+                </p>
+              )}
             </div>
 
             <a

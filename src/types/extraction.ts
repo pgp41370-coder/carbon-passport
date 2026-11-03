@@ -81,6 +81,7 @@ export type FieldKey =
   | 'material'
   | 'quantity'
   | 'outputQuantity'
+  | 'plantOutput'
   | 'electricityConsumption'
   | 'billingPeriod'
   | 'buyerName'

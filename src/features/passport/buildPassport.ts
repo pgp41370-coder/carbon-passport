@@ -144,9 +144,10 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
   const boundary: Claim[] = [
     {
       label: 'Declared reporting boundary',
-      kind: 'missing',
+      value: 'Cradle-to-gate for this batch: steel input, factory electricity shared by weight, job-worker furnace electricity',
+      kind: 'assumption',
       sources: [],
-      note: 'No boundary (for example cradle-to-gate) has been documented for this draft.',
+      note: 'Declared by this app for the carbon estimate. Transport, packaging and any fuel not on the papers are outside it.',
     },
     {
       label: 'Stages with any supporting evidence',
@@ -157,17 +158,37 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
     },
     {
       label: 'Declared unit for reporting',
-      kind: 'missing',
+      value: 'tCO₂e per tonne of finished fasteners',
+      kind: 'assumption',
       sources: [],
-      note: 'No declared unit (for example per tonne of finished fasteners) has been documented.',
+      note: 'Declared by this app for the carbon estimate.',
     },
   ]
 
   // ── 4. Energy and activity data ────────────────────────────────────────────
   const plant = claimFrom('Plant electricity', bills, 'electricityConsumption', undefined, 'No plant electricity bill was read.')
   const period = claimFrom('Plant electricity billing period', bills, 'billingPeriod', undefined, 'No billing period was read.')
+  const plantOutput = claimFrom(
+    'Plant output, same month (all batches)',
+    logs,
+    'plantOutput',
+    'The whole plant’s output for the month, used to share the electricity bill by weight. Check that it is the same month as the bill.',
+    'No monthly plant output was read, so the electricity bill cannot be shared to this batch.',
+  )
   const energy: Claim[] = [
-    { ...plant, note: [plant.note, plant.value ? 'Allocation to this batch: not allocated. The bill covers the whole plant for the billing period and no allocation method is documented.' : undefined].filter(Boolean).join(' ') },
+    {
+      ...plant,
+      note: [
+        plant.note,
+        plant.value
+          ? plantOutput.kind === 'extracted'
+            ? 'Shared to this batch by weight, using the plant’s monthly output (see the carbon estimate).'
+            : 'Allocation to this batch: not allocated. The bill covers the whole plant for the billing period and no monthly plant output is on the papers.'
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    },
     period,
     energyDocs.length
       ? claimFrom('Job-worker heat-treatment energy', energyDocs, 'electricityConsumption', 'Allocation to this batch: not documented.')
@@ -177,6 +198,7 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
           sources: [],
           note: 'Not provided. Heat-treatment energy is unknown and is not treated as zero.',
         },
+    plantOutput,
   ]
 
   // ── 5. Calculation prerequisites ───────────────────────────────────────────
@@ -201,8 +223,8 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
     {
       id: 'allocation',
       label: 'Documented allocation of plant electricity to this batch',
-      met: false,
-      detail: plant.value ? 'Plant-level bill present; no allocation method documented.' : 'No plant electricity data.',
+      met: plant.kind === 'extracted' && plantOutput.kind === 'extracted' && quantities.find((c) => c.label === 'Intermediate output (last recorded row)')?.kind === 'extracted',
+      detail: !plant.value ? 'No plant electricity data.' : plantOutput.kind === 'extracted' ? 'Shared by weight: batch output ÷ plant output for the month.' : 'Plant-level bill present; no monthly plant output to share it by.',
     },
     {
       id: 'steel-input',
@@ -213,14 +235,14 @@ export function buildPassport({ documents, results, issueReviews, traceRecords, 
     {
       id: 'emission-factors',
       label: 'Emission factors with documented sources',
-      met: false,
-      detail: 'None provided. This prototype does not supply emission factors.',
+      met: true,
+      detail: 'CEA grid factor (FY 2025-26) and the EU CBAM default value for wire rod, India, CN 7213.',
     },
     {
       id: 'methodology',
       label: 'Declared boundary, unit and calculation methodology',
-      met: false,
-      detail: 'Not documented.',
+      met: true,
+      detail: 'Declared by this app: cradle-to-gate, three lines, per tonne of finished output.',
     },
   ]
   const calculationAvailable = prerequisites.every((p) => p.met)

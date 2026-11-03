@@ -42,7 +42,7 @@ export const ROLES: readonly Role[] = [
     main: ['dashboard', 'review', 'map', 'validate'],
     more: ['traceability', 'passport', 'emissions', 'export', 'roadmap'],
   },
-  { id: 'buyer', label: 'EU buyer', who: 'Importer', main: ['dashboard', 'passport', 'review', 'map'], more: ['export', 'roadmap'] },
+  { id: 'buyer', label: 'EU buyer', who: 'Importer', main: ['dashboard', 'passport', 'review', 'map'], more: ['emissions', 'export', 'roadmap'] },
 ]
 
 const KEY = 'carbon-passport-role'
